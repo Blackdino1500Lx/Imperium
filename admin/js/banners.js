@@ -133,21 +133,29 @@ export function initBanners() {
       }
 
       const payload = {
-        title: form.elements.title.value,
-        subtitle: form.elements.subtitle.value,
-        cta_text: form.elements.cta_text.value,
-        cta_link: form.elements.cta_link.value,
+        title: form.elements.title.value || '',
+        subtitle: form.elements.subtitle.value || '',
+        cta_text: form.elements.cta_text.value || '',
+        cta_link: form.elements.cta_link.value || '',
         active: form.elements.active.checked,
       };
+
       if (imageUrl) payload.image_url = imageUrl;
       if (imageMobileUrl) payload.image_mobile_url = imageMobileUrl;
 
       if (id) {
+        // Actualizar existente
         await supabase.schema('imperium').from('banners').update(payload).eq('id', id);
       } else {
+        // Crear nuevo
         if (!imageUrl) throw new Error('La imagen principal es obligatoria.');
         payload.image_url = imageUrl;
-        payload.sort_order = Date.now();
+        
+        // Buscar el último orden para ponerlo al final (evita el error 400 de integer)
+        const { data: maxData } = await supabase.schema('imperium').from('banners').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+        const nextOrder = maxData && maxData.length > 0 ? maxData[0].sort_order + 1 : 0;
+        
+        payload.sort_order = nextOrder;
         await supabase.schema('imperium').from('banners').insert([payload]);
       }
 

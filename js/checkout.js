@@ -4,10 +4,12 @@ import { whatsappUrl, formatPrice, fullName } from './utils.js';
 
 let config = {};
 let currentCart = {};
+let allProducts = [];
 
 // Configura el formulario de checkout
 export function initCheckout(settings, cartData, updateCartCallback, openCartCallback) {
   config = settings;
+  allProducts = cartData; // Guardamos los productos para usarlos al armar el mensaje
   
   const form = document.getElementById('checkout-form');
   const errorMsg = document.getElementById('checkout-error');
@@ -33,6 +35,21 @@ export function initCheckout(settings, cartData, updateCartCallback, openCartCal
       quantity: currentCart[id]
     }));
 
+    // Guardamos una copia del carrito y total por si la DB falla, no perder los datos para el mensaje
+    const backupCart = { ...currentCart };
+    let backupTotal = 0;
+    let backupLines = [];
+
+    backupLines = Object.keys(backupCart).map((id, index) => {
+      const p = allProducts.find(prod => prod.id === id);
+      const q = backupCart[id];
+      if (p) {
+        backupTotal += (p.price * q);
+        return `${index + 1}. ${fullName(p)} ${p.size ? '('+p.size+'ml)' : ''} - Cant: ${q} - Subtotal: ${formatPrice(p.price * q)}`;
+      }
+      return '';
+    }).filter(Boolean);
+
     let orderNumber = '';
     let orderToken = '';
 
@@ -42,15 +59,15 @@ export function initCheckout(settings, cartData, updateCartCallback, openCartCal
       orderNumber = result.number;
       orderToken = result.token;
       
-      // Limpiamos el carrito si fue exitoso
+      // Si fue exitoso, vaciamos el carrito real
       updateCartCallback({});
       form.reset();
       
     } catch (error) {
       console.error('Error al crear pedido:', error);
-      errorMsg.textContent = error.message || 'Hubo un problema al registrar el pedido, pero puedes enviarlo por WhatsApp.';
+      errorMsg.textContent = 'Aviso: ' + error.message + ' Puedes enviar tu pedido por WhatsApp de todos modos.';
       errorMsg.hidden = false;
-      // No retornamos, dejamos que continúe para abrir WhatsApp de todos modos
+      // No retornamos, dejamos que continúe para abrir WhatsApp
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Pedir por WhatsApp';
@@ -59,29 +76,17 @@ export function initCheckout(settings, cartData, updateCartCallback, openCartCal
       let message = 'Hola, Imperium. Quisiera hacer este pedido:\n\n';
       
       if (orderNumber) {
-        const link = `https://imperium.cr/pedido.html?t=${orderToken}`; // Ajustar dominio en producción
+        // Ajusta el dominio si es necesario
+        const link = `${window.location.origin}/pedido.html?t=${orderToken}`; 
         message = `Hola, Imperium. Acabo de realizar el pedido *${orderNumber}*.\nPuedes ver el resumen aquí: ${link}\n\n`;
       }
 
       message += `*Nombre:* ${name}\n*Teléfono:* ${phone}\n\n`;
       
-      let total = 0;
-      const lines = [];
-      
-      // Iteramos sobre el carrito para armar el mensaje visual
-      Object.keys(currentCart).forEach((id, index) => {
-        const p = cartData.find(prod => prod.id === id); // Necesitamos acceso a los productos
-        if(p) {
-           const q = currentCart[id];
-           total += (p.price * q);
-           lines.push(`${index + 1}. ${fullName(p)} ${p.size ? '('+p.size+'ml)' : ''} - Cant: ${q} - Subtotal: ${formatPrice(p.price * q)}`);
-        }
-      });
-
-      // Si el carrito se vació antes de leerlo (porque la DB fue exitosa), usamos el respaldo
-      if (lines.length > 0) {
-        message += lines.join('\n') + '\n\n';
-        message += `*Total:* ${formatPrice(total)}\n\n`;
+      // Usamos el respaldo por si el carrito se vació exitosamente antes de armar el texto
+      if (backupLines.length > 0) {
+        message += backupLines.join('\n') + '\n\n';
+        message += `*Total:* ${formatPrice(backupTotal)}\n\n`;
       }
 
       message += '¿Me confirman disponibilidad, entrega y forma de pago?';
@@ -93,7 +98,7 @@ export function initCheckout(settings, cartData, updateCartCallback, openCartCal
       
       // 4. Cerrar el carrito y avisar
       if (orderNumber) {
-        openCartCallback(); // Cierra el panel
+        openCartCallback(); 
       }
     }
   });
