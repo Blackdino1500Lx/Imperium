@@ -29,6 +29,7 @@
       <div class="admin-brand">IMPERIUM <span>Admin</span></div>
       <nav class="admin-nav">
         <button data-tab="productos" class="active">Productos</button>
+        <button data-tab="colecciones">Colecciones</button>
         <button data-tab="banners">Banners</button>
         <button data-tab="ajustes">Ajustes</button>
         <button data-tab="pedidos">Pedidos</button>
@@ -84,6 +85,25 @@
                 <th>Título</th>
                 <th>Activo</th>
                 <th>Orden</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+            <section id="tab-colecciones" class="tab-panel">
+        <div class="panel-header">
+          <h2>Colecciones</h2>
+          <button id="btn-new-collection" class="button gold">Nuevo Grupo</button>
+        </div>
+        <div class="table-wrap">
+          <table id="collections-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Estado</th>
                 <th>Acciones</th>
               </tr>
             </thead>

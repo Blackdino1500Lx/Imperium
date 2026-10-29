@@ -2,7 +2,7 @@
 import { normalize, fullName } from './utils.js';
 
 // Estado compartido de los filtros activos.
-export const filters = { query: '', brand: '', category: '', availability: '', sort: 'name-asc', priceMin: null, priceMax: null };
+export const filters = { query: '', brand: '', category: '', availability: '', collection: '', sort: 'name-asc', priceMin: null, priceMax: null };
 
 // Comparador en español para ordenar marcas y nombres.
 export const collator = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
@@ -34,6 +34,7 @@ export function selectProducts(items, state) {
     && (!state.brand || p.brand === state.brand)
     && (!state.category || (state.category === 'sin' ? !p.category : p.category === state.category))
     && (!state.availability || p.availability === state.availability)
+    && (!state.collection || (p.collections && p.collections.includes(state.collection)))
   );
   return selected.sort((a, b) => {
     if (state.sort.startsWith('price')) {

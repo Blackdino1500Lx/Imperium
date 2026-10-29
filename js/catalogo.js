@@ -1,6 +1,7 @@
 // Catálogo: filtros, paginación y tarjetas de producto.
 import { filters, selectProducts, priceBounds, collator } from './filtros.js';
 import { escapeHtml, formatPrice, fullName, visualHtml, optionsHtml } from './utils.js';
+import { getCollections } from './api.js';
 
 let products = [];
 let pageSize = 48;
@@ -8,23 +9,56 @@ let visibleCount = 48;
 let searchTimer;
 
 // Punto de entrada: guarda productos y tamaño de página y pinta la cuadrícula.
-export function initCatalog(list, size) {
+export async function initCatalog(list, size) {
   products = list;
   pageSize = size;
   visibleCount = size;
+  
+  await renderCollections();
   renderBrands();
   renderCatalog();
   bindFilterEvents();
+  
+  // Activar filtros por URL (ej. #hombre, #mujer)
+  window.addEventListener('hashchange', applyHashFilter);
+  setTimeout(applyHashFilter, 100); 
 }
 
-// Permite a otros módulos consultar el catálogo cargado.
 export function getProducts() { return products; }
-
-// Busca un producto por id (lo usan la ficha y el carrito).
 export function findProduct(id) { return products.find(p => p.id === id); }
-
-// Devuelve el total real de perfumes cargados.
 export function getTotalProducts() { return products.length; }
+
+// Carga las colecciones en el select
+async function renderCollections() {
+  try {
+    const cols = await getCollections();
+    const select = document.getElementById('collection-filter');
+    if (select) {
+      select.innerHTML = '<option value="">Todas las colecciones</option>' + 
+        cols.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    }
+  } catch (error) {
+    console.error('Error cargando colecciones:', error);
+  }
+}
+
+// Detecta si la URL tiene un hash de categoría o colección y aplica el filtro.
+function applyHashFilter() {
+  const hash = window.location.hash.replace('#', '').toLowerCase();
+  if (!hash) return;
+
+  const categoryMap = { 'hombre': 'Hombre', 'mujer': 'Mujer', 'unisex': 'Unisex' };
+  
+  if (categoryMap[hash]) {
+    filters.category = categoryMap[hash];
+    document.getElementById('category-filter').value = categoryMap[hash];
+    filters.query = '';
+    document.getElementById('search').value = '';
+    visibleCount = pageSize;
+    renderCatalog();
+    document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
+  }
+}
 
 // Tarjeta de producto con imagen, datos y botón de carrito.
 function cardHtml(p) {
@@ -37,7 +71,6 @@ function cardHtml(p) {
   '</article>';
 }
 
-// Pinta el select de marcas ordenado alfabéticamente.
 function renderBrands() {
   const counts = new Map();
   products.forEach(p => counts.set(p.brand, (counts.get(p.brand) || 0) + 1));
@@ -45,7 +78,6 @@ function renderBrands() {
   document.getElementById('brand-filter').innerHTML = '<option value="">Todas las marcas</option>' + optionsHtml(brands.map(b => [b, b]), filters.brand);
 }
 
-// Ajusta los controles de precio al rango real de la lista.
 function renderPriceFilter() {
   const bounds = priceBounds(products);
   const clamp = value => Math.max(bounds.min, Math.min(bounds.max, Number(value)));
@@ -71,7 +103,6 @@ function renderPriceFilter() {
   document.getElementById('price-range-summary').textContent = bounds.available ? 'Desde ' + formatPrice(low) + ' hasta ' + formatPrice(high) + '.' : 'No hay perfumes con precio definido.';
 }
 
-// Aplica un cambio de rango de precio y repinta el catálogo.
 function updatePriceRange(key, value) {
   const bounds = priceBounds(products), number = Number(value);
   if (!bounds.available || !String(value).trim() || !Number.isFinite(number)) { renderPriceFilter(); return; }
@@ -84,7 +115,6 @@ function updatePriceRange(key, value) {
   renderCatalog();
 }
 
-// Repinta la cuadrícula según los filtros activos y el total visible.
 export function renderCatalog() {
   renderPriceFilter();
   const selected = selectProducts(products, filters);
@@ -97,17 +127,21 @@ export function renderCatalog() {
   document.getElementById('load-more').hidden = shown.length >= selected.length;
 }
 
-// Reinicia filtros, orden y búsqueda al estado inicial.
 export function clearFilters() {
-  Object.assign(filters, { query: '', brand: '', category: '', availability: '', sort: 'name-asc', priceMin: null, priceMax: null });
+  Object.assign(filters, { query: '', brand: '', category: '', availability: '', collection: '', sort: 'name-asc', priceMin: null, priceMax: null });
   document.getElementById('search').value = '';
-  ['brand-filter', 'category-filter', 'availability-filter'].forEach(id => { document.getElementById(id).value = ''; });
+  ['brand-filter', 'category-filter', 'availability-filter', 'collection-filter'].forEach(id => { 
+    const el = document.getElementById(id);
+    if (el) el.value = ''; 
+  });
   document.getElementById('sort-filter').value = 'name-asc';
   visibleCount = pageSize;
   renderCatalog();
+  if (window.location.hash) {
+    history.pushState("", document.title, window.location.pathname + window.location.search);
+  }
 }
 
-// Conecta todos los controles de filtro del panel del catálogo.
 function bindFilterEvents() {
   document.getElementById('price-toggle').addEventListener('click', () => {
     const panel = document.getElementById('price-panel');
@@ -125,9 +159,19 @@ function bindFilterEvents() {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => { filters.query = e.target.value; visibleCount = pageSize; renderCatalog(); }, 120);
   });
-  [['brand-filter', 'brand'], ['category-filter', 'category'], ['availability-filter', 'availability'], ['sort-filter', 'sort']].forEach(([id, key]) => {
+  
+  const filterMapping = [
+    ['brand-filter', 'brand'], 
+    ['category-filter', 'category'], 
+    ['availability-filter', 'availability'], 
+    ['collection-filter', 'collection'],
+    ['sort-filter', 'sort']
+  ];
+
+  filterMapping.forEach(([id, key]) => {
     document.getElementById(id).addEventListener('change', e => { filters[key] = e.target.value; visibleCount = pageSize; renderCatalog(); });
   });
+
   document.getElementById('clear-filters').addEventListener('click', clearFilters);
   document.getElementById('empty-clear').addEventListener('click', clearFilters);
   document.getElementById('load-more').addEventListener('click', () => {

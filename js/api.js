@@ -10,13 +10,14 @@ function mapProduct(p) {
     ...p,
     photo: p.image_url,
     photoSource: p.photo_source,
-    notesSummary: p.notes_summary
+    notesSummary: p.notes_summary,
+    collections: p.product_collections ? p.product_collections.map(c => c.collection_id) : []
   };
 }
 
-// Obtiene los productos activos.
+// Obtiene los productos activos y sus colecciones.
 export async function getProducts() {
-  const { data, error } = await supabase.schema('imperium').from('products').select('*').eq('active', true);
+  const { data, error } = await supabase.schema('imperium').from('products').select('*, product_collections(collection_id)').eq('active', true);
   if (error) {
     console.error('Error getProducts:', error);
     throw new Error('No se pudo cargar el catálogo. Intenta de nuevo.');
@@ -32,6 +33,13 @@ export async function getSettings() {
     throw new Error('No se pudo cargar la configuración.');
   }
   return data.reduce((acc, item) => ({ ...acc, [item.key]: item.value }), {});
+}
+
+// Obtiene las colecciones activas.
+export async function getCollections() {
+  const { data, error } = await supabase.schema('imperium').from('collections').select('*').eq('active', true).order('name');
+  if (error) throw new Error('No se pudieron cargar las colecciones.');
+  return data;
 }
 
 // Obtiene los banners activos ordenados.
