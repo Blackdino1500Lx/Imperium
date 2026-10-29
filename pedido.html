@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seguimiento de Pedido · Imperium</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body style="background: var(--paper);">
+  <header class="site-header">
+    <div class="wrap header-inner" style="justify-content: center;">
+      <a href="index.html" class="brand-lockup" aria-label="Imperium, inicio">
+        <img class="header-emblem" src="assets/img/emblema.png" alt="" width="35" height="48">
+        <span class="brand-name">IMPERIUM</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="wrap" style="padding-block: 60px; min-height: 80vh;">
+    <div id="loading" style="text-align: center;">Cargando información de tu pedido...</div>
+    
+    <div id="error-box" class="empty-state" hidden style="max-width: 600px; margin: 0 auto;">
+      <h3>Token inválido o pedido no encontrado.</h3>
+      <p>Verifica el enlace que te enviamos por WhatsApp o contacta a soporte.</p>
+      <a href="index.html" class="button ink">Volver a la tienda</a>
+    </div>
+
+    <div id="order-box" hidden style="max-width: 800px; margin: 0 auto; background: var(--white); padding: 40px; border: 1px solid var(--line);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 1px solid var(--line); padding-bottom: 20px;">
+        <div>
+          <h1 style="font-family: var(--serif); font-size: 36px; color: var(--navy); margin-bottom: 5px;">Pedido <span id="order-number"></span></h1>
+          <p style="color: var(--muted); font-size: 14px;" id="order-date"></p>
+        </div>
+        <div>
+          <span id="order-status" class="order-status-badge"></span>
+        </div>
+      </div>
+
+      <div id="timeline-container">
+        <h3 style="font-family: var(--serif); font-size: 24px; margin-bottom: 20px;">Estado del pedido</h3>
+        <ul class="timeline">
+          <li class="timeline-step" data-step="pedido"><div class="timeline-dot">1</div><span>Pedido</span></li>
+          <li class="timeline-step" data-step="comprado"><div class="timeline-dot">2</div><span>Pago Confirmado</span></li>
+          <li class="timeline-step" data-step="enviando"><div class="timeline-dot">3</div><span>Enviando</span></li>
+          <li class="timeline-step" data-step="entregado"><div class="timeline-dot">4</div><span>Entregado</span></li>
+        </ul>
+      </div>
+
+      <div style="margin-block: 40px;">
+        <h3 style="font-family: var(--serif); font-size: 24px; margin-bottom: 15px;">Detalle de productos</h3>
+        <table class="order-details-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cant.</th>
+              <th style="text-align: right;">Precio</th>
+            </tr>
+          </thead>
+          <tbody id="order-items"></tbody>
+        </table>
+        <div style="text-align: right; font-size: 20px; font-weight: 500; color: var(--navy);">
+          Total: <span id="order-total"></span>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="font-family: var(--serif); font-size: 24px; margin-bottom: 15px;">Historial</h3>
+        <ul id="order-events" style="list-style: none; padding: 0; font-size: 14px; color: var(--muted);"></ul>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer dark">
+    <div class="wrap footer-inner">
+      <span class="footer-name">IMPERIUM</span>
+      <p>Perfumería en Costa Rica.</p>
+    </div>
+  </footer>
+
+  <script type="module" src="js/seguimiento.js"></script>
+</body>
+</html>

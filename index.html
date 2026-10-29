@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Imperium, perfumería en Costa Rica. Consulta nuestro catálogo de fragancias y coordina tu pedido por WhatsApp.">
+  <meta name="theme-color" content="#0f1d36">
+  <title>Imperium · Perfumería en Costa Rica</title>
+  
+  <!-- SEO / Open Graph -->
+  <meta property="og:title" content="Imperium · Perfumería en Costa Rica">
+  <meta property="og:description" content="Encuentra tu fragancia ideal. Catálogo de perfumes y pedidos fáciles por WhatsApp.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://imperium.cr/">
+  <meta property="og:image" content="https://imperium.cr/assets/img/logo.svg">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Imperium · Perfumería">
+  <meta name="twitter:description" content="Encuentra tu fragancia ideal. Catálogo de perfumes y pedidos fáciles por WhatsApp.">
+  <meta name="twitter:image" content="https://imperium.cr/assets/img/logo.svg">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    "name": "Imperium",
+    "description": "Perfumería en Costa Rica. Catálogo de fragancias y pedidos por WhatsApp.",
+    "url": "https://imperium.cr",
+    "telephone": "+50664549194",
+    "image": "https://imperium.cr/assets/img/logo.svg",
+    "sameAs": [
+      "https://www.instagram.com/imperium__cr"
+    ],
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "CR"
+    }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230f1d36'/%3E%3Cpath d='M16 4 19 13 28 16 19 19 16 28 13 19 4 16 13 13Z' fill='%23b08d3c'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#catalogo">Ir al catálogo</a>
+  <header id="site-header" class="site-header">
+    <div class="wrap header-inner">
+      <a href="#inicio" class="brand-lockup" aria-label="Imperium, inicio">
+        <img class="header-emblem" src="assets/img/logo.svg" alt="" width="35" height="48">
+        <span class="brand-name">IMPERIUM</span>
+      </a>
+      <nav id="header-nav" class="header-nav" aria-label="Navegación principal">
+        <a href="#catalogo">Catálogo</a>
+        <a href="#como-pedir">Cómo pedir</a>
+        <a href="#perfil-olfativo">Un perfume que vaya contigo</a>
+        <a href="#nosotros">Nosotros</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+      <div class="header-actions">
+        <button id="cart-button" class="header-cart" type="button" aria-label="Ver carrito: 0 perfumes" aria-haspopup="dialog" aria-controls="cart-dialog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5 7h14l1 14H4L5 7Z"></path><path d="M8 8V6a4 4 0 0 1 8 0v2"></path></svg>
+          <span class="cart-label">Carrito</span>
+          <span id="cart-count" class="cart-count">0</span>
+        </button>
+        <a class="button header-whatsapp" data-whatsapp href="#" target="_blank" rel="noopener noreferrer" aria-label="Escribir a Imperium por WhatsApp">
+          <svg class="line-icon whatsapp-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-12 7L3 20l1.5-5A8 8 0 1 1 20 11.5Z"></path><path d="m8 7 2 3-1 1c1 2 2 3 4 3l1-1 3 2"></path></svg>
+          <span class="whatsapp-label">WhatsApp</span>
+        </a>
+        <button id="menu-button" class="menu-button" type="button" aria-expanded="false" aria-controls="header-nav" aria-label="Abrir menú">
+          <svg class="line-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="banner-section" class="banner-section" role="region" aria-roledescription="carrusel" aria-label="Promociones destacadas" aria-live="off" hidden>
+      <div id="banner-track" class="banner-track"></div>
+      <button id="banner-prev" class="banner-arrow prev" aria-label="Anterior" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <button id="banner-next" class="banner-arrow next" aria-label="Siguiente" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+      <div id="banner-dots" class="banner-dots" role="tablist" aria-label="Seleccionar banner" hidden></div>
+    </section>
+
+    <section id="inicio" class="hero dark" aria-labelledby="hero-title">
+      <div class="hero-circles" aria-hidden="true"></div>
+      <div class="wrap hero-inner">
+        <div class="hero-copy">
+          <h1 id="hero-title">Cargando...</h1>
+          <p id="hero-description"></p>
+          <div class="hero-buttons">
+            <a class="button" href="#catalogo">Ver catálogo</a>
+            <a class="button outline" href="#como-pedir">Cómo pedir</a>
+          </div>
+        </div>
+        <div class="logo-stage">
+          <svg class="star one" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 0 20 12 32 16 20 20 16 32 12 20 0 16 12 12Z"></path></svg>
+          <svg class="star two" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 0 20 12 32 16 20 20 16 32 12 20 0 16 12 12Z"></path></svg>
+          <svg class="star three" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 0 20 12 32 16 20 20 16 32 12 20 0 16 12 12Z"></path></svg>
+          <div class="logo-arch">
+            <img class="hero-logo" src="assets/img/logo.svg" width="1254" height="1254" alt="Logo dorado de Imperium con monograma y estrella de cuatro puntas">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="catalogo" class="catalog-section" aria-labelledby="catalog-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <h2 id="catalog-title">Nuestro catálogo</h2>
+          <p>Busca por nombre, marca o nota olfativa y compara precios. La disponibilidad se confirma al hacer tu pedido. <a href="#perfil-olfativo">Encuentra tu perfil olfativo.</a></p>
+        </div>
+        <div id="filter-bar" class="filter-bar">
+          <div class="search-controls">
+            <label class="search-field">
+              <span class="field-label">Buscar perfume</span>
+              <svg class="line-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
+              <input id="search" type="search" placeholder="Nombre, marca o nota" autocomplete="off" aria-label="Buscar por nombre, marca o nota olfativa">
+            </label>
+            <button id="price-toggle" class="price-toggle" type="button" aria-expanded="false" aria-controls="price-panel">Precio</button>
+          </div>
+          <button id="filter-toggle" class="filter-toggle" type="button" aria-expanded="false" aria-controls="filter-panel">
+            <svg class="line-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6M16 14v6"></path></svg>Filtros
+          </button>
+          <div id="filter-panel" class="filter-panel">
+            <label><span class="field-label">Marca</span><select id="brand-filter"><option value="">Todas las marcas</option></select></label>
+            <label><span class="field-label">Categoría</span><select id="category-filter"><option value="">Todas</option><option>Hombre</option><option>Mujer</option><option>Unisex</option><option value="sin">Sin especificar</option></select></label>
+            <label><span class="field-label">Disponibilidad</span><select id="availability-filter"><option value="">Todas</option><option value="disponible">Disponible</option><option value="pocas">Pocas unidades</option><option value="agotado">Agotado</option><option value="confirmar">Por confirmar</option></select></label>
+            <label><span class="field-label">Ordenar</span><select id="sort-filter"><option value="name-asc">Nombre A–Z</option><option value="name-desc">Nombre Z–A</option><option value="price-asc">Menor precio</option><option value="price-desc">Mayor precio</option></select></label>
+          </div>
+          <section id="price-panel" class="price-panel" aria-labelledby="price-panel-title" hidden>
+            <div class="price-panel-heading">
+              <h3 id="price-panel-title">Buscar por presupuesto</h3>
+              <button id="price-clear" class="text-button" type="button">Ver todos los precios</button>
+            </div>
+            <div class="price-range-fields">
+              <div>
+                <label for="price-min"><span class="field-label">Precio mínimo (₡)</span><input id="price-min" type="number" inputmode="numeric" step="500"></label>
+                <input id="price-min-range" type="range" step="500" aria-label="Ajustar el precio mínimo">
+              </div>
+              <div>
+                <label for="price-max"><span class="field-label">Precio máximo (₡)</span><input id="price-max" type="number" inputmode="numeric" step="500"></label>
+                <input id="price-max-range" type="range" step="500" aria-label="Ajustar el precio máximo">
+              </div>
+            </div>
+            <p id="price-range-summary" class="price-range-summary" aria-live="polite"></p>
+            <p class="price-range-note">Al ajustar el rango se muestran solo perfumes con precio definido.</p>
+          </section>
+        </div>
+        <div class="result-line">
+          <p id="result-count" role="status" aria-live="polite"></p>
+          <button id="clear-filters" class="text-button" type="button">Limpiar filtros</button>
+        </div>
+        <div id="catalog-grid" class="catalog-grid"></div>
+        
+        <div id="api-error" class="empty-state" hidden>
+          <h3>No se pudo cargar el catálogo.</h3>
+          <p>Revisa tu conexión a internet o intenta de nuevo.</p>
+          <button id="retry-button" class="button ink" type="button">Reintentar</button>
+        </div>
+
+        <div id="empty-state" class="empty-state" hidden>
+          <h3>No encontramos ese perfume.</h3>
+          <p>Prueba con otra palabra o elimina algún filtro.</p>
+          <button id="empty-clear" class="button ink" type="button">Ver todo el catálogo</button>
+        </div>
+        <div id="more-area" class="more-area" hidden>
+          <p id="shown-count"></p>
+          <button id="load-more" class="button ink" type="button">Ver más perfumes</button>
+        </div>
+        <noscript><p>Activa JavaScript en tu navegador para ver y filtrar el catálogo completo.</p></noscript>
+      </div>
+    </section>
+
+    <section id="como-pedir" class="steps-section" aria-labelledby="steps-title">
+      <div class="wrap">
+        <h2 id="steps-title">Cómo pedir</h2>
+        <div class="steps-grid">
+          <article class="order-step">
+            <div class="step-top"><span class="step-number">01</span><svg class="line-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M8 10h16v16H8zM12 5h8v5M12 17h8M12 21h5"></path></svg></div>
+            <h3>Elige</h3>
+            <p>Revisa el catálogo y abre el perfume que te interesa para ver sus detalles.</p>
+          </article>
+          <article class="order-step">
+            <div class="step-top"><span class="step-number">02</span><svg class="line-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 7h22v16H13l-6 4v-4H5zM10 12h12M10 17h8"></path></svg></div>
+            <h3>Escríbenos</h3>
+            <p>Añade uno o varios perfumes al carrito y envía el pedido por WhatsApp. Confirmamos disponibilidad y coordinamos la entrega.</p>
+          </article>
+          <article class="order-step">
+            <div class="step-top"><span class="step-number">03</span><svg class="line-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="m5 10 11-5 11 5v14l-11 5-11-5zM5 10l11 5 11-5M16 15v14M10 7l11 5"></path></svg></div>
+            <h3>Recíbelo</h3>
+            <p>Acuerda con nosotros la entrega de tu perfume y los detalles del pago.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="perfil-olfativo" class="profile-section" aria-labelledby="profile-title">
+      <div class="wrap profile-layout">
+        <div class="profile-intro">
+          <h2 id="profile-title">Un perfume que vaya contigo.</h2>
+          <p>Cuéntanos qué aromas te gustan y cómo quieres usarlos. En siete pasos tendrás un perfil para orientar tu elección.</p>
+        </div>
+        <div class="profile-panel">
+          <form id="profile-quiz">
+            <p id="quiz-progress" class="quiz-progress" aria-live="polite"></p>
+            <div id="quiz-step"></div>
+            <p id="quiz-error" class="quiz-error" role="alert" hidden></p>
+            <div class="quiz-actions">
+              <button id="quiz-back" class="text-button" type="button">Anterior</button>
+              <button id="quiz-next" class="button ink" type="submit">Continuar</button>
+            </div>
+          </form>
+          <div id="quiz-result" class="quiz-result" aria-live="polite" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="nosotros" class="about-section dark" aria-labelledby="about-title">
+      <div class="wrap about-inner">
+        <div>
+          <h2 id="about-title">Somos Imperium</h2>
+          <p id="about-story" class="about-story">Cargando historia...</p>
+        </div>
+        <div class="about-art" aria-hidden="true">
+          <svg viewBox="0 0 180 250" fill="none" stroke="currentColor" stroke-width="1.2">
+            <path d="M67 26h46v38H67zM61 64h58v13H61zM45 78h90c11 0 18 8 18 19v118c0 12-7 19-18 19H45c-11 0-18-7-18-19V97c0-11 7-19 18-19Z"></path>
+            <path d="M37 101h106v118H37zM73 132h34v43H73zM65 187h50M67 198h46M90 115v-8M86 111h8M73 36h34"></path>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section id="contacto" class="contact-section" aria-labelledby="contact-title">
+      <div class="wrap contact-grid">
+        <h2 id="contact-title">Hablemos.</h2>
+        <div class="contact-item">
+          <h3>WhatsApp</h3>
+          <a id="whatsapp-contact" data-whatsapp href="#" target="_blank" rel="noopener noreferrer">Cargando...</a>
+        </div>
+        <div class="contact-item">
+          <h3>Instagram</h3>
+          <p id="instagram-contact">Cargando...</p>
+        </div>
+        <div class="contact-item">
+          <h3>Horario</h3>
+          <p id="hours-contact">Cargando...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer dark">
+    <div class="wrap footer-inner">
+      <span class="footer-name">IMPERIUM</span>
+      <p>Perfumería en Costa Rica.</p>
+    </div>
+  </footer>
+
+  <dialog id="product-dialog" class="product-dialog" aria-labelledby="modal-title">
+    <button id="modal-close" class="modal-close" type="button" aria-label="Cerrar detalle del perfume">
+      <svg class="line-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+    </button>
+    <div class="modal-layout">
+      <div id="modal-visual" class="product-picture modal-picture"></div>
+      <div class="modal-copy">
+        <p id="modal-brand" class="modal-brand"></p>
+        <h2 id="modal-title"></h2>
+        <p id="modal-price" class="modal-price"></p>
+        <p id="photo-reference" class="reference-caption" hidden></p>
+        <dl id="modal-facts" class="product-facts"></dl>
+        <div class="modal-cart-actions">
+          <button id="modal-add-cart" class="button" type="button">Añadir al carrito</button>
+          <button id="modal-view-cart" class="text-button" type="button" aria-haspopup="dialog" aria-controls="cart-dialog">Ver carrito</button>
+        </div>
+        <p id="modal-cart-status" class="modal-cart-status" role="status" aria-live="polite"></p>
+        <section id="modal-notes" class="modal-notes" aria-label="Notas olfativas" hidden></section>
+        <a id="modal-whatsapp" class="button ink modal-whatsapp" target="_blank" rel="noopener noreferrer">Pedir por WhatsApp</a>
+        <div class="product-navigation" aria-label="Recorrer los perfumes del catálogo">
+          <button id="product-prev" class="product-nav-button" type="button" aria-label="Ver perfume anterior"><span aria-hidden="true">←</span> Anterior</button>
+          <span id="product-position" class="product-position" aria-live="polite"></span>
+          <button id="product-next" class="product-nav-button" type="button" aria-label="Ver siguiente perfume">Siguiente <span aria-hidden="true">→</span></button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="cart-dialog" class="cart-dialog" aria-labelledby="cart-title" aria-describedby="cart-description">
+    <div class="cart-shell">
+      <header class="cart-heading">
+        <div>
+          <h2 id="cart-title">Tu carrito</h2>
+          <p id="cart-description">Reúne aquí los perfumes que quieres pedir.</p>
+        </div>
+        <button id="cart-close" class="modal-close cart-close" type="button" aria-label="Cerrar carrito">
+          <svg class="line-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+        </button>
+      </header>
+      <div class="cart-content">
+        <button id="cart-clear" class="text-button cart-clear" type="button" hidden>Vaciar carrito</button>
+        <div id="cart-empty" class="cart-empty">
+          <h3>Aún no has elegido perfumes.</h3>
+          <p>Añade tus favoritos desde el catálogo. Después podrás revisar cantidades y preparar un solo pedido.</p>
+          <button id="cart-continue" class="button ink" type="button">Ver catálogo</button>
+        </div>
+        <div id="cart-items" hidden></div>
+        <p id="cart-storage-notice" class="cart-storage-notice" hidden>El carrito funciona durante esta visita, pero este navegador no permite conservarlo al cerrar la página.</p>
+      </div>
+      <footer id="cart-footer" class="cart-footer" hidden>
+        <div class="cart-total-row">
+          <span id="cart-total-label">Total de perfumes</span>
+          <strong id="cart-total" aria-live="polite">₡0</strong>
+        </div>
+        <p id="cart-price-notice" class="cart-price-notice" hidden>Hay perfumes cuyo precio falta confirmar. El subtotal sólo incluye los precios disponibles.</p>
+        
+        <!-- FORMULARIO DE CHECKOUT -->
+        <form id="checkout-form" class="checkout-form">
+          <p style="font-size: 13px; color: var(--muted); margin-bottom: 5px;">Ingresa tus datos para generar el pedido.</p>
+          <input type="text" id="checkout-name" placeholder="Tu nombre completo" required autocomplete="name">
+          <input type="tel" id="checkout-phone" placeholder="Tu WhatsApp (ej. 88888888)" required autocomplete="tel">
+          <div class="checkout-actions">
+            <button type="submit" id="checkout-submit" class="button ink">Pedir por WhatsApp</button>
+          </div>
+        </form>
+        <p id="checkout-error" class="quiz-error" role="alert" hidden style="margin-bottom: 10px;"></p>
+        <!-- FIN FORMULARIO -->
+        
+        <p>Se abrirá WhatsApp con tu selección, cantidades y precios. Confirma el envío del mensaje allí. Disponibilidad, entrega y pago se coordinan con Imperium.</p>
+      </footer>
+    </div>
+  </dialog>
+
+  <div id="cart-feedback" class="toast cart-feedback" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

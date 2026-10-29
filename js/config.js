@@ -1,0 +1,2 @@
+export const SUPABASE_URL = 'https://db.edevcr.com';
+export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzg5MjM4MzczLCJleHAiOjE5NDY5MTgzNzN9.eOhfkhTwKTlGgk72VM1RzFc44e8wMMdRVGjtbw0_eA8';

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin · Imperium</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div id="login-screen" class="login-container">
+    <form id="login-form" class="login-form">
+      <h1>Imperium Admin</h1>
+      <p id="login-error" class="error-msg" role="alert" hidden></p>
+      <label>Correo
+        <input type="email" id="email" required autocomplete="email">
+      </label>
+      <label>Contraseña
+        <input type="password" id="password" required autocomplete="current-password">
+      </label>
+      <button type="submit" class="button gold" id="login-btn">Ingresar</button>
+    </form>
+  </div>
+
+  <div id="admin-screen" hidden>
+    <header class="admin-header">
+      <div class="admin-brand">IMPERIUM <span>Admin</span></div>
+      <nav class="admin-nav">
+        <button data-tab="productos" class="active">Productos</button>
+        <button data-tab="banners">Banners</button>
+        <button data-tab="ajustes">Ajustes</button>
+        <button data-tab="pedidos">Pedidos</button>
+      </nav>
+      <div class="admin-actions">
+        <a href="../index.html" target="_blank" class="button outline small">Ver tienda</a>
+        <button id="logout-btn" class="button danger small">Salir</button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+      <section id="tab-productos" class="tab-panel active">
+        <div class="panel-header">
+          <h2>Productos</h2>
+          <button id="btn-new-product" class="button gold">Nuevo Producto</button>
+        </div>
+        <div class="filters-bar">
+          <input type="search" id="prod-search" placeholder="Buscar por marca o nombre...">
+          <select id="prod-active-filter">
+            <option value="true">Solo activos</option>
+            <option value="false">Solo inactivos</option>
+            <option value="all">Todos</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table id="prod-table">
+            <thead>
+              <tr>
+                <th>Foto</th>
+                <th>Marca</th>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="prod-pagination"></div>
+      </section>
+
+      <section id="tab-banners" class="tab-panel">
+        <div class="panel-header">
+          <h2>Banners</h2>
+          <button id="btn-new-banner" class="button gold">Nuevo Banner</button>
+        </div>
+        <div class="table-wrap">
+          <table id="banner-table">
+            <thead>
+              <tr>
+                <th>Imagen</th>
+                <th>Título</th>
+                <th>Activo</th>
+                <th>Orden</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tab-ajustes" class="tab-panel">
+        <div class="panel-header">
+          <h2>Ajustes del sitio</h2>
+        </div>
+        <form id="settings-form" class="settings-form">
+          <div class="form-grid">
+            <label>WhatsApp (con código de país)
+              <input type="text" name="whatsapp" required>
+            </label>
+            <label>Instagram (sin @)
+              <input type="text" name="instagram">
+            </label>
+            <label>Horario de atención
+              <input type="text" name="hours">
+            </label>
+            <label>Título del Hero
+              <input type="text" name="heroTitle">
+            </label>
+            <label>Texto del Hero
+              <textarea name="heroCopy" rows="3"></textarea>
+            </label>
+            <label>Historia de la marca
+              <textarea name="story" rows="5"></textarea>
+            </label>
+            <label>Segundos entre cambios de banner
+              <input type="number" name="banner_interval_seconds" min="2" max="60">
+            </label>
+          </div>
+          <button type="submit" class="button gold" id="btn-save-settings">Guardar Ajustes</button>
+        </form>
+      </section>
+
+      <section id="tab-pedidos" class="tab-panel">
+        <div class="panel-header">
+          <h2>Pedidos</h2>
+        </div>
+        <p style="color: var(--muted);">Módulo de pedidos en construcción (Fase 6).</p>
+      </section>
+    </main>
+  </div>
+
+  <!-- Dialog para Producto -->
+  <dialog id="dialog-product" class="admin-dialog">
+    <form id="form-product" class="dialog-form">
+      <h3 id="dlg-prod-title">Editar Producto</h3>
+      <input type="hidden" name="id">
+      
+      <div class="form-grid">
+        <label>Marca
+          <input type="text" name="brand" required>
+        </label>
+        <label>Nombre
+          <input type="text" name="name" required>
+        </label>
+        <label>Precio (₡)
+          <input type="number" name="price" min="0" required>
+        </label>
+        <label>Tamaño (ml)
+          <input type="text" name="size">
+        </label>
+        <label>Categoría
+          <select name="category">
+            <option value="">Sin especificar</option>
+            <option value="Hombre">Hombre</option>
+            <option value="Mujer">Mujer</option>
+            <option value="Unisex">Unisex</option>
+          </select>
+        </label>
+        <label>Disponibilidad
+          <select name="availability">
+            <option value="confirmar">Por confirmar</option>
+            <option value="disponible">Disponible</option>
+            <option value="pocas">Pocas unidades</option>
+            <option value="agotado">Agotado</option>
+          </select>
+        </label>
+        <label>Notas de salida
+          <input type="text" name="top">
+        </label>
+        <label>Notas de corazón
+          <input type="text" name="heart">
+        </label>
+        <label>Notas de fondo
+          <input type="text" name="base">
+        </label>
+      </div>
+
+      <div class="image-upload">
+        <label>Foto
+          <input type="file" id="prod-image-file" accept="image/*">
+        </label>
+        <div id="prod-image-preview" class="preview-box">Sin imagen</div>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="button outline" data-close-dialog>Cancelar</button>
+        <button type="submit" class="button gold">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dialog para Banner -->
+  <dialog id="dialog-banner" class="admin-dialog">
+    <form id="form-banner" class="dialog-form">
+      <h3>Editar Banner</h3>
+      <input type="hidden" name="id">
+      
+      <div class="form-grid">
+        <label>Título
+          <input type="text" name="title">
+        </label>
+        <label>Subtítulo
+          <input type="text" name="subtitle">
+        </label>
+        <label>Texto del botón
+          <input type="text" name="cta_text">
+        </label>
+        <label>Enlace del botón
+          <input type="text" name="cta_link">
+        </label>
+        <label>Activo
+          <input type="checkbox" name="active" checked>
+        </label>
+      </div>
+
+      <div class="image-upload">
+        <label>Imagen Escritorio (Obligatoria)
+          <input type="file" id="banner-image-file" accept="image/*">
+        </label>
+        <div id="banner-image-preview" class="preview-box">Sin imagen</div>
+      </div>
+      <div class="image-upload">
+        <label>Imagen Móvil (Opcional)
+          <input type="file" id="banner-mobile-file" accept="image/*">
+        </label>
+        <div id="banner-mobile-preview" class="preview-box">Sin imagen</div>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="button outline" data-close-dialog>Cancelar</button>
+        <button type="submit" class="button gold">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
