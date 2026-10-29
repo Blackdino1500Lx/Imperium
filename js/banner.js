@@ -100,7 +100,10 @@ export async function initBanner(config) {
     intervalSeconds = Number(config.banner_interval_seconds) || 6;
     slides = await getBanners();
     
-    if (!slides.length) return;
+    if (!slides.length) {
+      console.log('No hay banners activos en la base de datos.');
+      return;
+    }
 
     isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -148,5 +151,6 @@ export async function initBanner(config) {
     }
   } catch (error) {
     console.error('Error cargando banners:', error);
+    alert('Error al cargar el banner: ' + error.message);
   }
 }
