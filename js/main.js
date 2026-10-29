@@ -1,14 +1,13 @@
 // Arranque de la tienda: carga datos desde api.js, pinta textos y activa menú.
-import { getProducts, getSettings } from './api.js';
+import { getProducts, getSettings, getBanners, getCollections } from './api.js';
 import { initCatalog, getTotalProducts } from './catalogo.js';
 import { initProductModal } from './producto-modal.js';
-import { initCart, renderCart } from './carrito.js';
+import { initCart, renderCart, clearCart } from './carrito.js';
 import { initQuiz } from './quiz.js';
 import { initBanner } from './banner.js';
 import { initCheckout } from './checkout.js';
 import { escapeHtml, whatsappUrl } from './utils.js';
 
-// Pinta textos del hero, la historia y los datos de contacto.
 function renderSettings(config) {
   const titleEl = document.getElementById('hero-title');
   const title = (config.heroTitle || '').trim();
@@ -17,7 +16,6 @@ function renderSettings(config) {
 
   document.getElementById('hero-description').textContent = config.heroCopy || '';
   document.getElementById('about-story').textContent = config.story || '';
-
   document.querySelectorAll('[data-whatsapp]').forEach(a => { a.href = whatsappUrl(config.whatsapp); });
 
   const phone = String(config.whatsapp || '').replace(/\D/g, '');
@@ -31,7 +29,6 @@ function renderSettings(config) {
   document.getElementById('hours-contact').textContent = config.hours || '[Días y horas de atención]';
 }
 
-// Menú móvil: abre, cierra y se cierra al navegar a una sección.
 function initMenu() {
   const button = document.getElementById('menu-button');
   const nav = document.getElementById('header-nav');
@@ -55,21 +52,26 @@ async function init() {
   const errorState = document.getElementById('api-error');
   
   try {
-    const [products, config] = await Promise.all([getProducts(), getSettings()]);
+    // Hacemos TODAS las peticiones a la vez (en paralelo) para que sea mucho más rápido
+    const [products, config, banners, collections] = await Promise.all([
+      getProducts(), 
+      getSettings(),
+      getBanners(),
+      getCollections()
+    ]);
     
-    initCatalog(products, Number(config.pageSize) || 48);
+    initCatalog(products, Number(config.pageSize) || 48, collections);
     initProductModal(config);
     initCart(products, config);
     initQuiz(config);
-    initBanner(config);
+    initBanner(config, banners);
     renderSettings(config);
     initMenu();
 
-    // Inicializar checkout pasándole los productos y un callback para vaciar el carrito
-    initCheckout(config, products, (newCart) => {
-      // Al crear el pedido, forzamos el carrito a vaciarse
-      localStorage.removeItem('imperium.carrito.v1');
-      window.location.reload(); // Recarga simple para actualizar UI
+    // Checkout (limpieza del carrito sin recargar la página)
+    initCheckout(config, products, () => {
+      clearCart();
+      renderCart();
     }, () => {
       document.getElementById('cart-dialog').close();
     });

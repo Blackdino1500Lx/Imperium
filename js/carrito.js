@@ -10,7 +10,6 @@ let cart = {};
 let cartSaveFailed = false;
 let cartFeedbackTimer;
 
-// Guarda el estado del carrito en localStorage si el navegador lo permite.
 function persistCart() {
   try {
     if (Object.keys(cart).length) localStorage.setItem(CART_KEY, JSON.stringify(cart));
@@ -19,7 +18,6 @@ function persistCart() {
   } catch { cartSaveFailed = true; }
 }
 
-// Descarta ids desconocidos o agotados y limita las cantidades.
 function cleanCart(value) {
   const result = {};
   if (!value || typeof value !== 'object' || Array.isArray(value)) return result;
@@ -30,18 +28,15 @@ function cleanCart(value) {
   return result;
 }
 
-// Carga el carrito guardado; si falla, empieza vacío.
 function loadCart() {
   try { cart = cleanCart(JSON.parse(localStorage.getItem(CART_KEY) || '{}')); }
   catch { cart = {}; cartSaveFailed = true; }
 }
 
-// Devuelve las líneas válidas del carrito con su producto actual.
 function cartLines() {
   return products.filter(p => Object.prototype.hasOwnProperty.call(cart, p.id)).map(p => ({ product: p, quantity: cart[p.id] }));
 }
 
-// Calcula unidades, total y aviso de precio por confirmar.
 function cartSummary() {
   const lines = cartLines();
   return {
@@ -52,7 +47,6 @@ function cartSummary() {
   };
 }
 
-// Aviso breve (toast) con el resultado de una acción sobre el carrito.
 function cartFeedback(message) {
   const el = document.getElementById('cart-feedback');
   el.textContent = message;
@@ -62,7 +56,6 @@ function cartFeedback(message) {
   cartFeedbackTimer = setTimeout(() => { el.hidden = true; }, 4200);
 }
 
-// Repinta el contador, las líneas y el total del carrito.
 export function renderCart() {
   const cleaned = cleanCart(cart);
   if (JSON.stringify(cleaned) !== JSON.stringify(cart)) { cart = cleaned; persistCart(); }
@@ -92,11 +85,9 @@ export function renderCart() {
   document.getElementById('cart-price-notice').hidden = !summary.unknownPrice;
   document.getElementById('cart-storage-notice').hidden = !cartSaveFailed;
   
-  // Sincronizar con checkout.js si está disponible
   if (window.syncCartToCheckout) window.syncCartToCheckout(cart);
 }
 
-// Añade una unidad de un producto al carrito si está disponible.
 export function addToCart(id) {
   const p = products.find(p => p.id === id);
   if (!p) return false;
@@ -109,7 +100,12 @@ export function addToCart(id) {
   return true;
 }
 
-// Fija la cantidad de una línea; 0 la elimina.
+// NUEVO: Vaciar carrito sin recargar
+export function clearCart() {
+  cart = {};
+  persistCart();
+}
+
 function setCartQuantity(id, value) {
   if (!Object.prototype.hasOwnProperty.call(cart, id) || !Number.isInteger(value) || value < 0 || value > CART_QUANTITY_LIMIT) return false;
   if (value === 0) delete cart[id]; else cart[id] = value;
@@ -118,7 +114,6 @@ function setCartQuantity(id, value) {
   return true;
 }
 
-// Abre el panel lateral del carrito, cerrando antes la ficha si está abierta.
 function openCart() {
   const productDialog = document.getElementById('product-dialog');
   if (productDialog.open) productDialog.close();
@@ -128,12 +123,10 @@ function openCart() {
   document.body.style.overflow = 'hidden';
 }
 
-// Cierra el panel lateral del carrito.
 function closeCart() {
   document.getElementById('cart-dialog').close();
 }
 
-// Inicializa el carrito y conecta todos sus controles.
 export function initCart(list, settings) {
   products = list;
   config = settings;
@@ -145,8 +138,7 @@ export function initCart(list, settings) {
   document.getElementById('cart-close').addEventListener('click', closeCart);
   document.getElementById('cart-continue').addEventListener('click', () => { closeCart(); location.hash = '#catalogo'; });
   document.getElementById('cart-clear').addEventListener('click', () => { 
-    cart = {}; 
-    persistCart(); 
+    clearCart(); 
     renderCart(); 
     cartFeedback('Se vació el carrito.'); 
   });

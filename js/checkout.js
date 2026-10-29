@@ -1,21 +1,19 @@
 // Checkout: captura datos, llama a la base de datos y abre WhatsApp.
 import { createOrder } from './api.js';
-import { whatsappUrl, formatPrice, fullName } from './utils.js';
+import { formatPrice, fullName } from './utils.js';
 
 let config = {};
 let currentCart = {};
 let allProducts = [];
 
-// Configura el formulario de checkout
 export function initCheckout(settings, cartData, updateCartCallback, openCartCallback) {
   config = settings;
-  allProducts = cartData; // Guardamos los productos para usarlos al armar el mensaje
+  allProducts = cartData;
   
   const form = document.getElementById('checkout-form');
   const errorMsg = document.getElementById('checkout-error');
   const submitBtn = document.getElementById('checkout-submit');
 
-  // Sincronizar el estado del carrito cada vez que se llama
   window.syncCartToCheckout = (newCart) => {
     currentCart = newCart;
   };
@@ -28,19 +26,15 @@ export function initCheckout(settings, cartData, updateCartCallback, openCartCal
 
     const name = document.getElementById('checkout-name').value.trim();
     const phone = document.getElementById('checkout-phone').value.trim();
+    const items = Object.keys(currentCart).map(id => ({ id: id, quantity: currentCart[id] }));
+    
+    // Abrimos la ventana de WhatsApp de inmediato para que el navegador no la bloquee
+    const waWindow = window.open('', '_blank');
 
-    // Preparamos los ítems para la DB
-    const items = Object.keys(currentCart).map(id => ({
-      id: id,
-      quantity: currentCart[id]
-    }));
-
-    // Guardamos una copia del carrito y total por si la DB falla, no perder los datos para el mensaje
+    // Respaldamos la info para el mensaje
     const backupCart = { ...currentCart };
     let backupTotal = 0;
-    let backupLines = [];
-
-    backupLines = Object.keys(backupCart).map((id, index) => {
+    let backupLines = Object.keys(backupCart).map((id, index) => {
       const p = allProducts.find(prod => prod.id === id);
       const q = backupCart[id];
       if (p) {
@@ -54,36 +48,30 @@ export function initCheckout(settings, cartData, updateCartCallback, openCartCal
     let orderToken = '';
 
     try {
-      // 1. Crear pedido en Supabase
       const result = await createOrder(items, { name, phone });
       orderNumber = result.number;
       orderToken = result.token;
       
-      // Si fue exitoso, vaciamos el carrito real
-      updateCartCallback({});
+      updateCartCallback(); // Limpia el carrito SIN recargar
       form.reset();
       
     } catch (error) {
       console.error('Error al crear pedido:', error);
       errorMsg.textContent = 'Aviso: ' + error.message + ' Puedes enviar tu pedido por WhatsApp de todos modos.';
       errorMsg.hidden = false;
-      // No retornamos, dejamos que continúe para abrir WhatsApp
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Pedir por WhatsApp';
       
-      // 2. Generar mensaje de WhatsApp
       let message = 'Hola, Imperium. Quisiera hacer este pedido:\n\n';
       
       if (orderNumber) {
-        // Ajusta el dominio si es necesario
         const link = `${window.location.origin}/pedido.html?t=${orderToken}`; 
         message = `Hola, Imperium. Acabo de realizar el pedido *${orderNumber}*.\nPuedes ver el resumen aquí: ${link}\n\n`;
       }
 
       message += `*Nombre:* ${name}\n*Teléfono:* ${phone}\n\n`;
       
-      // Usamos el respaldo por si el carrito se vació exitosamente antes de armar el texto
       if (backupLines.length > 0) {
         message += backupLines.join('\n') + '\n\n';
         message += `*Total:* ${formatPrice(backupTotal)}\n\n`;
@@ -93,10 +81,14 @@ export function initCheckout(settings, cartData, updateCartCallback, openCartCal
 
       const waUrl = `https://wa.me/${String(config.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
       
-      // 3. Abrir WhatsApp
-      window.open(waUrl, '_blank');
+      // Redirigimos la pestaña en blanco que abrimos al principio
+      if (waWindow) {
+        waWindow.location.href = waUrl;
+      } else {
+        // Si el navegador la bloqueó, forzamos la navegación aquí
+        window.location.href = waUrl;
+      }
       
-      // 4. Cerrar el carrito y avisar
       if (orderNumber) {
         openCartCallback(); 
       }

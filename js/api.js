@@ -15,13 +15,30 @@ function mapProduct(p) {
   };
 }
 
+// Carga inicial: trae solo los datos necesarios para la tarjeta (sin notas olfativas)
 export async function getProducts() {
-  const { data, error } = await supabase.schema('imperium').from('products').select('*, product_collections(collection_id)').eq('active', true);
+  const { data, error } = await supabase.schema('imperium')
+    .from('products')
+    .select('id, brand, name, price, size, category, availability, image_url, photo_source, notes_summary, product_collections(collection_id)')
+    .eq('active', true);
+    
   if (error) {
     console.error('Error getProducts:', error);
     throw new Error('No se pudo cargar el catálogo.');
   }
   return data.map(mapProduct);
+}
+
+// Bajo demanda: trae las notas olfativas solo cuando se abre la ficha
+export async function getProductDetails(id) {
+  const { data, error } = await supabase.schema('imperium')
+    .from('products')
+    .select('top, heart, base')
+    .eq('id', id)
+    .single();
+    
+  if (error) return null;
+  return data;
 }
 
 export async function getSettings() {
@@ -42,7 +59,6 @@ export async function getBanners() {
   return data;
 }
 
-// Crea un pedido. Ahora expone el mensaje exacto del servidor si falla.
 export async function createOrder(items, cliente) {
   const { data, error } = await supabase.schema('imperium').rpc('create_order', { items, cliente });
   if (error) {

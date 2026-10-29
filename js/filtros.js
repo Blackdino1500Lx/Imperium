@@ -1,13 +1,9 @@
 // Filtros del catálogo: búsqueda sin tildes, criterios y orden.
 import { normalize, fullName } from './utils.js';
 
-// Estado compartido de los filtros activos.
 export const filters = { query: '', brand: '', category: '', availability: '', collection: '', sort: 'name-asc', priceMin: null, priceMax: null };
-
-// Comparador en español para ordenar marcas y nombres.
 export const collator = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
 
-// Alias que amplían la búsqueda con marcas escritas de varias formas.
 const ALIASES = {
   'Yves Saint Laurent': ' YSL YVESSAINTLAURENT YVESSAINT',
   'Giorgio Armani': ' Armani',
@@ -19,13 +15,13 @@ const ALIASES = {
   'Montblanc': ' Mont Blanc'
 };
 
-// Texto indexable de un producto (marca, nombre, notas y alias).
 export function searchText(p) {
-  const text = fullName(p) + ' ' + [p.top, p.heart, p.base, p.notesSummary].filter(Boolean).join(' ');
+  // Solo busca en las notas si ya fueron cargadas en memoria (evita undefined)
+  const notes = p.top ? [p.top, p.heart, p.base].filter(Boolean).join(' ') : '';
+  const text = fullName(p) + ' ' + notes + ' ' + (p.notesSummary || '');
   return normalize(text + (ALIASES[p.brand] || ''));
 }
 
-// Aplica todos los filtros y devuelve la lista ordenada.
 export function selectProducts(items, state) {
   const words = normalize(state.query).split(' ').filter(Boolean);
   const selected = items.filter(p =>
@@ -46,7 +42,6 @@ export function selectProducts(items, state) {
   });
 }
 
-// Rango real de precios válidos dentro de una lista de productos.
 export function priceBounds(items) {
   let min = Infinity, max = -Infinity;
   for (const p of items) {

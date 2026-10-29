@@ -1,25 +1,24 @@
 // Catálogo: filtros, paginación y tarjetas de producto.
 import { filters, selectProducts, priceBounds, collator } from './filtros.js';
 import { escapeHtml, formatPrice, fullName, visualHtml, optionsHtml } from './utils.js';
-import { getCollections } from './api.js';
 
 let products = [];
+let collectionsList = [];
 let pageSize = 48;
 let visibleCount = 48;
 let searchTimer;
 
-// Punto de entrada: guarda productos y tamaño de página y pinta la cuadrícula.
-export async function initCatalog(list, size) {
+export function initCatalog(list, size, collections) {
   products = list;
+  collectionsList = collections || [];
   pageSize = size;
   visibleCount = size;
   
-  await renderCollections();
+  renderCollections();
   renderBrands();
   renderCatalog();
   bindFilterEvents();
   
-  // Activar filtros por URL (ej. #hombre, #mujer)
   window.addEventListener('hashchange', applyHashFilter);
   setTimeout(applyHashFilter, 100); 
 }
@@ -28,21 +27,14 @@ export function getProducts() { return products; }
 export function findProduct(id) { return products.find(p => p.id === id); }
 export function getTotalProducts() { return products.length; }
 
-// Carga las colecciones en el select
-async function renderCollections() {
-  try {
-    const cols = await getCollections();
-    const select = document.getElementById('collection-filter');
-    if (select) {
-      select.innerHTML = '<option value="">Todas las colecciones</option>' + 
-        cols.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
-    }
-  } catch (error) {
-    console.error('Error cargando colecciones:', error);
+function renderCollections() {
+  const select = document.getElementById('collection-filter');
+  if (select) {
+    select.innerHTML = '<option value="">Todas las colecciones</option>' + 
+      collectionsList.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
   }
 }
 
-// Detecta si la URL tiene un hash de categoría o colección y aplica el filtro.
 function applyHashFilter() {
   const hash = window.location.hash.replace('#', '').toLowerCase();
   if (!hash) return;
@@ -52,6 +44,22 @@ function applyHashFilter() {
   if (categoryMap[hash]) {
     filters.category = categoryMap[hash];
     document.getElementById('category-filter').value = categoryMap[hash];
+    filters.collection = '';
+    document.getElementById('collection-filter').value = '';
+    filters.query = '';
+    document.getElementById('search').value = '';
+    visibleCount = pageSize;
+    renderCatalog();
+    document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+
+  const col = collectionsList.find(c => c.slug === hash);
+  if (col) {
+    filters.collection = col.id;
+    document.getElementById('collection-filter').value = col.id;
+    filters.category = '';
+    document.getElementById('category-filter').value = '';
     filters.query = '';
     document.getElementById('search').value = '';
     visibleCount = pageSize;
@@ -60,7 +68,6 @@ function applyHashFilter() {
   }
 }
 
-// Tarjeta de producto con imagen, datos y botón de carrito.
 function cardHtml(p) {
   return '<article class="product-card" data-card-id="' + p.id + '">' +
     '<button type="button" class="product-open" data-open-id="' + p.id + '" aria-haspopup="dialog" aria-controls="product-dialog" aria-label="' + escapeHtml('Ver ' + fullName(p) + ', ' + formatPrice(p.price)) + '">' +
