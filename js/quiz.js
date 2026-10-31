@@ -1,4 +1,4 @@
-// Cuestionario olfativo: siete pasos y un perfil recomendado.
+// Cuestionario olfativo: seis pasos y un perfil recomendado.
 import { escapeHtml } from './utils.js';
 
 let config = {};
@@ -37,12 +37,6 @@ const QUIZ_STEPS = [
     { value: 'especial', label: 'Una ocasión especial', weights: { amaderados: 1, florales: 1 } },
     { value: 'airelibre', label: 'Al aire libre', weights: { citricos: 2, herbales: 1 } },
     { value: 'versatil', label: 'Distintas ocasiones', weights: { frescos: 1, amaderados: 1 } }
-  ] },
-  { key: 'presentation', title: '¿Qué presentación prefieres?', help: 'Es una preferencia; el tamaño disponible se confirma para cada perfume.', options: [
-    { value: 'pequena', label: 'Pequeña, hasta 50 ml', weights: {} },
-    { value: 'mediana', label: 'Media, de 50 a 100 ml', weights: {} },
-    { value: 'grande', label: 'Grande, más de 100 ml', weights: {} },
-    { value: 'indiferente', label: 'Sin preferencia', weights: {} }
   ] },
   { key: 'intensity', title: '¿Cuánta presencia quieres?', options: [
     { value: 'discreta', label: 'Discreta, cerca de la piel', weights: {} },
@@ -83,12 +77,10 @@ function recommendProfile(answers) {
     description: descriptions[primary],
     chosen: chosen.map(f => FAMILY_LABELS[f]).join(', '),
     intensity: quizLabel('intensity', answers.intensity),
-    occasion: quizLabel('occasion', answers.occasion),
-    presentation: quizLabel('presentation', answers.presentation)
+    occasion: quizLabel('occasion', answers.occasion)
   };
 }
 
-// Pinta el paso actual con animación de deslizamiento
 function renderQuiz(direction = 1, focus = false) {
   const step = QUIZ_STEPS[quizIndex];
   const value = quizAnswers[step.key] || (step.multiple ? [] : '');
@@ -98,9 +90,8 @@ function renderQuiz(direction = 1, focus = false) {
     step.options.map(o => '<label class="quiz-option"><input type="' + (step.multiple ? 'checkbox' : 'radio') + '" name="quiz-' + step.key + '" value="' + o.value + '" aria-describedby="quiz-help"' + ((step.multiple ? value.includes(o.value) : value === o.value) ? ' checked' : '') + '><span>' + o.label + '</span></label>').join('') +
     '</div></fieldset>';
     
-  // Animación
   container.classList.remove('anim-slide-right', 'anim-slide-left');
-  void container.offsetWidth; // Forzar reflow
+  void container.offsetWidth;
   container.classList.add(direction === 1 ? 'anim-slide-right' : 'anim-slide-left');
 
   document.getElementById('profile-quiz').hidden = false;
@@ -127,7 +118,7 @@ function captureQuizAnswer() {
 
 function renderProfileResult() {
   const profile = recommendProfile(quizAnswers);
-  const message = 'Hola, Imperium. Mi perfil recomendado es ' + profile.title + '. Familias: ' + profile.chosen + '. Sensación: ' + quizLabel('sensation', quizAnswers.sensation) + '. Personalidad: ' + quizLabel('personality', quizAnswers.personality) + '. Estilo: ' + quizLabel('style', quizAnswers.style) + '. Ocasión: ' + profile.occasion + '. Presentación: ' + profile.presentation + '. Presencia: ' + profile.intensity + '. ¿Qué perfumes me recomiendan?';
+  const message = 'Hola, Imperium. Mi perfil recomendado es ' + profile.title + '. Familias: ' + profile.chosen + '. Sensación: ' + quizLabel('sensation', quizAnswers.sensation) + '. Personalidad: ' + quizLabel('personality', quizAnswers.personality) + '. Estilo: ' + quizLabel('style', quizAnswers.style) + '. Ocasión: ' + profile.occasion + '. Presencia: ' + profile.intensity + '. ¿Qué perfumes me recomiendan?';
   
   document.getElementById('profile-quiz').hidden = true;
   const resultContainer = document.getElementById('quiz-result');
@@ -136,11 +127,10 @@ function renderProfileResult() {
   resultContainer.innerHTML =
     '<h3 id="quiz-result-title" tabindex="-1">' + escapeHtml(profile.title) + '</h3>' +
     '<p>' + escapeHtml(profile.description) + ' La familia principal sigue tus preferencias; los matices consideran la sensación, personalidad, estilo y ocasión que elegiste.</p>' +
-    '<dl class="product-facts">' + [['Tus familias', profile.chosen], ['Presencia', profile.intensity], ['Ocasión', profile.occasion], ['Presentación', profile.presentation]].map(([label, value]) => '<div class="fact-row"><dt>' + label + '</dt><dd>' + escapeHtml(value) + '</dd></div>').join('') + '</dl>' +
+    '<dl class="product-facts">' + [['Tus familias', profile.chosen], ['Presencia', profile.intensity], ['Ocasión', profile.occasion]].map(([label, value]) => '<div class="fact-row"><dt>' + label + '</dt><dd>' + escapeHtml(value) + '</dd></div>').join('') + '</dl>' +
     '<p>Este perfil orienta tu elección. Confirmamos contigo las notas, el tamaño y la disponibilidad de cada perfume.</p>' +
     '<div class="quiz-result-actions"><a class="button ink" href="https://wa.me/' + String(config.whatsapp).replace(/\D/g, '') + '?text=' + encodeURIComponent(message) + '" target="_blank" rel="noopener noreferrer">Consultar mi perfil</a><a class="button" href="#catalogo">Ver catálogo</a><button id="quiz-restart" class="text-button" type="button">Volver a responder</button></div>';
     
-  // Animación de entrada para el resultado
   resultContainer.classList.remove('anim-fade-in');
   void resultContainer.offsetWidth;
   resultContainer.classList.add('anim-fade-in');
@@ -156,7 +146,7 @@ export function initQuiz(settings) {
     if (!captureQuizAnswer()) return;
     if (quizIndex < QUIZ_STEPS.length - 1) { 
       quizIndex++; 
-      renderQuiz(1, true); // Avanzar
+      renderQuiz(1, true);
     } else {
       renderProfileResult();
     }
@@ -167,7 +157,7 @@ export function initQuiz(settings) {
     const selected = [...document.getElementById('quiz-step').querySelectorAll('input:checked')].map(i => i.value);
     quizAnswers[step.key] = step.multiple ? selected : (selected[0] || '');
     quizIndex = Math.max(0, quizIndex - 1);
-    renderQuiz(-1, true); // Retroceder
+    renderQuiz(-1, true);
   });
   
   document.getElementById('quiz-result').addEventListener('click', event => {
@@ -178,5 +168,5 @@ export function initQuiz(settings) {
     }
   });
   
-  renderQuiz(1); // Inicio
+  renderQuiz(1);
 }

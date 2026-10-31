@@ -70,7 +70,7 @@ function renderTable(data) {
   
   tbody.innerHTML = data.map(p => `
     <tr>
-      <td><img src="${p.image_url || '../assets/img/logo.png'}" alt=""></td>
+      <td><img src="${p.image_url || '../assets/img/logo.svg'}" alt=""></td>
       <td>${p.brand}</td>
       <td>${p.name}</td>
       <td>₡${Number(p.price).toLocaleString('de-DE')}</td>
@@ -93,6 +93,21 @@ function renderPagination() {
   container.innerHTML = html;
 }
 
+// Carga las marcas en el datalist
+async function loadBrands(selectedBrand = '') {
+  const { data } = await supabase.schema('imperium').from('products').select('brand');
+  const uniqueBrands = [...new Set((data || []).map(p => p.brand))].sort();
+  
+  const datalist = document.getElementById('brand-options');
+  datalist.innerHTML = uniqueBrands.map(b => `<option value="${b}"></option>`).join('');
+  
+  if (selectedBrand) {
+    document.getElementById('prod-brand').value = selectedBrand;
+  } else {
+    document.getElementById('prod-brand').value = '';
+  }
+}
+
 // Configura el dialog de creación/edición
 async function setupDialog(id = null) {
   const dialog = document.getElementById('dialog-product');
@@ -106,8 +121,9 @@ async function setupDialog(id = null) {
     document.getElementById('dlg-prod-title').textContent = 'Editar Producto';
     const { data } = await supabase.schema('imperium').from('products').select('*').eq('id', id).single();
     if (data) {
+      await loadBrands(data.brand);
+      
       form.elements.id.value = data.id;
-      form.elements.brand.value = data.brand;
       form.elements.name.value = data.name;
       form.elements.price.value = data.price;
       form.elements.size.value = data.size || '';
@@ -124,6 +140,7 @@ async function setupDialog(id = null) {
     }
   } else {
     document.getElementById('dlg-prod-title').textContent = 'Nuevo Producto';
+    await loadBrands();
   }
   dialog.showModal();
 }
@@ -168,6 +185,14 @@ export function initProductos() {
     e.preventDefault();
     const form = e.target;
     const btn = form.querySelector('button[type="submit"]');
+    
+    // La marca se toma directo del input
+    const brandValue = form.elements.brand.value.trim();
+    if (!brandValue) {
+      alert('Por favor, escribe o selecciona una marca.');
+      return;
+    }
+
     btn.disabled = true; btn.textContent = 'Guardando...';
 
     try {
@@ -182,7 +207,7 @@ export function initProductos() {
       }
 
       const payload = {
-        brand: form.elements.brand.value,
+        brand: brandValue,
         name: form.elements.name.value,
         price: Number(form.elements.price.value),
         size: form.elements.size.value,
