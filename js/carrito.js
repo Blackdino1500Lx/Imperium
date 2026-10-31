@@ -93,14 +93,21 @@ export function addToCart(id) {
   if (!p) return false;
   if (p.availability === 'agotado') { cartFeedback('Este perfume está agotado. Puedes consultar su regreso por WhatsApp.'); return false; }
   if ((cart[id] || 0) >= CART_QUANTITY_LIMIT) { cartFeedback('Puedes seleccionar hasta ' + CART_QUANTITY_LIMIT + ' unidades de cada perfume.'); return false; }
+  
   cart[id] = (cart[id] || 0) + 1;
   persistCart();
   renderCart();
   cartFeedback(fullName(p) + ' se añadió al carrito.');
+  
+  // ANIMACIÓN: Hacer rebotar el icono del carrito
+  const cartBtn = document.getElementById('cart-button');
+  cartBtn.classList.remove('cart-bump');
+  void cartBtn.offsetWidth; // Truco para reiniciar la animación
+  cartBtn.classList.add('cart-bump');
+  
   return true;
 }
 
-// NUEVO: Vaciar carrito sin recargar
 export function clearCart() {
   cart = {};
   persistCart();
@@ -143,9 +150,21 @@ export function initCart(list, settings) {
     cartFeedback('Se vació el carrito.'); 
   });
   
+  // ANIMACIÓN: Cambiar texto del botón al añadir desde la tarjeta
   document.getElementById('catalog-grid').addEventListener('click', event => {
     const button = event.target.closest('[data-cart-add]');
-    if (button) addToCart(button.dataset.cartAdd);
+    if (button) {
+      const success = addToCart(button.dataset.cartAdd);
+      if (success) {
+        const originalText = button.textContent;
+        button.textContent = '¡Añadido!';
+        button.classList.add('added');
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.classList.remove('added');
+        }, 1500);
+      }
+    }
   });
   
   document.getElementById('cart-items').addEventListener('click', event => {

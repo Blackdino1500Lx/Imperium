@@ -1,18 +1,18 @@
 // Catálogo: filtros, paginación y tarjetas de producto.
 import { filters, selectProducts, priceBounds, collator } from './filtros.js';
-import { escapeHtml, formatPrice, fullName, visualHtml, optionsHtml } from './utils.js';
+import { escapeHtml, formatPrice, fullName, visualHtml, optionsHtml, normalize } from './utils.js';
 
 let products = [];
 let collectionsList = [];
-let pageSize = 48;
-let visibleCount = 48;
+let pageSize = 10; // Límite a 10 productos por defecto
+let visibleCount = 10;
 let searchTimer;
 
 export function initCatalog(list, size, collections) {
   products = list;
   collectionsList = collections || [];
-  pageSize = size;
-  visibleCount = size;
+  pageSize = size || 10; 
+  visibleCount = pageSize;
   
   renderCollections();
   renderBrands();
@@ -35,36 +35,45 @@ function renderCollections() {
   }
 }
 
+// Manejar el Switch visual
+function updateSwitchUI() {
+  document.querySelectorAll('.switch-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.cat === (filters.category || ''));
+  });
+}
+
 function applyHashFilter() {
-  const hash = window.location.hash.replace('#', '').toLowerCase();
+  const hash = normalize(window.location.hash.replace('#', ''));
   if (!hash) return;
 
   const categoryMap = { 'hombre': 'Hombre', 'mujer': 'Mujer', 'unisex': 'Unisex' };
   
   if (categoryMap[hash]) {
     filters.category = categoryMap[hash];
-    document.getElementById('category-filter').value = categoryMap[hash];
     filters.collection = '';
     document.getElementById('collection-filter').value = '';
     filters.query = '';
     document.getElementById('search').value = '';
     visibleCount = pageSize;
+    updateSwitchUI();
     renderCatalog();
     document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
     return;
   }
 
-  const col = collectionsList.find(c => c.slug === hash);
+  const col = collectionsList.find(c => normalize(c.slug) === hash);
   if (col) {
     filters.collection = col.id;
     document.getElementById('collection-filter').value = col.id;
     filters.category = '';
-    document.getElementById('category-filter').value = '';
     filters.query = '';
     document.getElementById('search').value = '';
     visibleCount = pageSize;
+    updateSwitchUI();
     renderCatalog();
     document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
+  } else {
+    console.warn('Enlace #' + hash + ' no coincide con colecciones. Disponibles:', collectionsList.map(c => '#' + c.slug).join(', '));
   }
 }
 
@@ -137,12 +146,13 @@ export function renderCatalog() {
 export function clearFilters() {
   Object.assign(filters, { query: '', brand: '', category: '', availability: '', collection: '', sort: 'name-asc', priceMin: null, priceMax: null });
   document.getElementById('search').value = '';
-  ['brand-filter', 'category-filter', 'availability-filter', 'collection-filter'].forEach(id => { 
+  ['brand-filter', 'availability-filter', 'collection-filter'].forEach(id => { 
     const el = document.getElementById(id);
     if (el) el.value = ''; 
   });
   document.getElementById('sort-filter').value = 'name-asc';
   visibleCount = pageSize;
+  updateSwitchUI();
   renderCatalog();
   if (window.location.hash) {
     history.pushState("", document.title, window.location.pathname + window.location.search);
@@ -150,6 +160,16 @@ export function clearFilters() {
 }
 
 function bindFilterEvents() {
+  // Eventos del Switch
+  document.getElementById('category-switch').addEventListener('click', e => {
+    const btn = e.target.closest('.switch-btn');
+    if (!btn) return;
+    filters.category = btn.dataset.cat;
+    visibleCount = pageSize; // Al cambiar categoría, vuelve a 10 productos
+    updateSwitchUI();
+    renderCatalog();
+  });
+
   document.getElementById('price-toggle').addEventListener('click', () => {
     const panel = document.getElementById('price-panel');
     panel.hidden = !panel.hidden;
@@ -169,7 +189,6 @@ function bindFilterEvents() {
   
   const filterMapping = [
     ['brand-filter', 'brand'], 
-    ['category-filter', 'category'], 
     ['availability-filter', 'availability'], 
     ['collection-filter', 'collection'],
     ['sort-filter', 'sort']

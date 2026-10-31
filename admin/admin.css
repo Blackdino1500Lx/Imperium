@@ -77,3 +77,49 @@ td img { width: 40px; height: 50px; object-fit: cover; background: var(--paper);
 .settings-form { background: var(--white); padding: 30px; border: 1px solid var(--line); max-width: 800px; }
 .settings-form .form-grid { grid-template-columns: 1fr 1fr; }
 .settings-form textarea { resize: vertical; }
+
+.print-container {
+  display: none;
+}
+
+@media print {
+  /* Ocultar absolutamente todo el cuerpo de la página */
+  body * { visibility: hidden; }
+  
+  /* Mostrar solo el contenedor de la factura */
+  .print-container, .print-container * { visibility: visible; }
+  
+  /* Posicionar la factura en la esquina superior izquierda de la página impresa */
+  .print-container {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20px;
+    background: white;
+    color: black;
+    font-family: Arial, sans-serif;
+  }
+
+  /* Estilos específicos de la factura */
+  .invoice-header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px; }
+  .invoice-brand h1 { font-size: 28px; margin: 0 0 5px 0; letter-spacing: 2px; }
+  .invoice-brand p { margin: 2px 0; font-size: 12px; color: #444; }
+  .invoice-info { text-align: right; }
+  .invoice-info h2 { font-size: 24px; margin: 0 0 10px 0; }
+  .invoice-info p { margin: 2px 0; font-size: 14px; }
+  
+  .invoice-client { margin-bottom: 30px; }
+  .invoice-client h3 { font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; }
+  .invoice-client p { margin: 4px 0; font-size: 14px; }
+  
+  .invoice-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  .invoice-table th, .invoice-table td { padding: 10px; border-bottom: 1px solid #ccc; font-size: 14px; }
+  .invoice-table th { background: #f5f5f5; text-align: left; }
+  
+  .invoice-totals { display: flex; justify-content: flex-end; }
+  .total-row { display: flex; justify-content: space-between; width: 250px; font-size: 18px; font-weight: bold; border-top: 2px solid #000; padding-top: 10px; }
+  
+  .invoice-footer { margin-top: 50px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ccc; padding-top: 20px; }
+}

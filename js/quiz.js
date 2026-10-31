@@ -51,12 +51,10 @@ const QUIZ_STEPS = [
   ] }
 ];
 
-// Etiqueta legible de una opción del cuestionario.
 function quizLabel(key, value) {
   return QUIZ_STEPS.find(s => s.key === key)?.options.find(o => o.value === value)?.label || '';
 }
 
-// Calcula el perfil a partir de las respuestas y devuelve textos listos.
 function recommendProfile(answers) {
   const chosen = [...new Set(answers.families || [])].filter(f => Object.prototype.hasOwnProperty.call(FAMILY_LABELS, f));
   if (!chosen.length) throw new Error('Elige al menos una familia olfativa.');
@@ -90,23 +88,31 @@ function recommendProfile(answers) {
   };
 }
 
-// Pinta el paso actual del cuestionario y mueve el foco si se pide.
-function renderQuiz(focus = false) {
+// Pinta el paso actual con animación de deslizamiento
+function renderQuiz(direction = 1, focus = false) {
   const step = QUIZ_STEPS[quizIndex];
   const value = quizAnswers[step.key] || (step.multiple ? [] : '');
+  
+  const container = document.getElementById('quiz-step');
+  container.innerHTML = '<fieldset class="quiz-fieldset"><legend id="quiz-question" tabindex="-1">' + step.title + '</legend><p id="quiz-help" class="quiz-help">' + (step.help || 'Elige la opción que mejor te represente.') + '</p><div class="quiz-options">' +
+    step.options.map(o => '<label class="quiz-option"><input type="' + (step.multiple ? 'checkbox' : 'radio') + '" name="quiz-' + step.key + '" value="' + o.value + '" aria-describedby="quiz-help"' + ((step.multiple ? value.includes(o.value) : value === o.value) ? ' checked' : '') + '><span>' + o.label + '</span></label>').join('') +
+    '</div></fieldset>';
+    
+  // Animación
+  container.classList.remove('anim-slide-right', 'anim-slide-left');
+  void container.offsetWidth; // Forzar reflow
+  container.classList.add(direction === 1 ? 'anim-slide-right' : 'anim-slide-left');
+
   document.getElementById('profile-quiz').hidden = false;
   document.getElementById('quiz-result').hidden = true;
   document.getElementById('quiz-error').hidden = true;
   document.getElementById('quiz-progress').textContent = 'Paso ' + (quizIndex + 1) + ' de ' + QUIZ_STEPS.length;
-  document.getElementById('quiz-step').innerHTML = '<fieldset class="quiz-fieldset"><legend id="quiz-question" tabindex="-1">' + step.title + '</legend><p id="quiz-help" class="quiz-help">' + (step.help || 'Elige la opción que mejor te represente.') + '</p><div class="quiz-options">' +
-    step.options.map(o => '<label class="quiz-option"><input type="' + (step.multiple ? 'checkbox' : 'radio') + '" name="quiz-' + step.key + '" value="' + o.value + '" aria-describedby="quiz-help"' + ((step.multiple ? value.includes(o.value) : value === o.value) ? ' checked' : '') + '><span>' + o.label + '</span></label>').join('') +
-    '</div></fieldset>';
   document.getElementById('quiz-back').hidden = quizIndex === 0;
   document.getElementById('quiz-next').textContent = quizIndex === QUIZ_STEPS.length - 1 ? 'Ver mi perfil' : 'Continuar';
+  
   if (focus) document.getElementById('quiz-question').focus({ preventScroll: true });
 }
 
-// Valida la respuesta del paso actual y la guarda.
 function captureQuizAnswer() {
   const step = QUIZ_STEPS[quizIndex];
   const selected = [...document.getElementById('quiz-step').querySelectorAll('input:checked')].map(input => input.value);
@@ -119,39 +125,58 @@ function captureQuizAnswer() {
   return true;
 }
 
-// Muestra el resultado final con enlaces a WhatsApp y al catálogo.
 function renderProfileResult() {
   const profile = recommendProfile(quizAnswers);
   const message = 'Hola, Imperium. Mi perfil recomendado es ' + profile.title + '. Familias: ' + profile.chosen + '. Sensación: ' + quizLabel('sensation', quizAnswers.sensation) + '. Personalidad: ' + quizLabel('personality', quizAnswers.personality) + '. Estilo: ' + quizLabel('style', quizAnswers.style) + '. Ocasión: ' + profile.occasion + '. Presentación: ' + profile.presentation + '. Presencia: ' + profile.intensity + '. ¿Qué perfumes me recomiendan?';
+  
   document.getElementById('profile-quiz').hidden = true;
-  document.getElementById('quiz-result').hidden = false;
-  document.getElementById('quiz-result').innerHTML =
+  const resultContainer = document.getElementById('quiz-result');
+  resultContainer.hidden = false;
+  
+  resultContainer.innerHTML =
     '<h3 id="quiz-result-title" tabindex="-1">' + escapeHtml(profile.title) + '</h3>' +
     '<p>' + escapeHtml(profile.description) + ' La familia principal sigue tus preferencias; los matices consideran la sensación, personalidad, estilo y ocasión que elegiste.</p>' +
     '<dl class="product-facts">' + [['Tus familias', profile.chosen], ['Presencia', profile.intensity], ['Ocasión', profile.occasion], ['Presentación', profile.presentation]].map(([label, value]) => '<div class="fact-row"><dt>' + label + '</dt><dd>' + escapeHtml(value) + '</dd></div>').join('') + '</dl>' +
     '<p>Este perfil orienta tu elección. Confirmamos contigo las notas, el tamaño y la disponibilidad de cada perfume.</p>' +
     '<div class="quiz-result-actions"><a class="button ink" href="https://wa.me/' + String(config.whatsapp).replace(/\D/g, '') + '?text=' + encodeURIComponent(message) + '" target="_blank" rel="noopener noreferrer">Consultar mi perfil</a><a class="button" href="#catalogo">Ver catálogo</a><button id="quiz-restart" class="text-button" type="button">Volver a responder</button></div>';
+    
+  // Animación de entrada para el resultado
+  resultContainer.classList.remove('anim-fade-in');
+  void resultContainer.offsetWidth;
+  resultContainer.classList.add('anim-fade-in');
+    
   document.getElementById('quiz-result-title').focus({ preventScroll: true });
 }
 
-// Inicializa el cuestionario y conecta submit, volver y reinicio.
 export function initQuiz(settings) {
   config = settings;
+  
   document.getElementById('profile-quiz').addEventListener('submit', event => {
     event.preventDefault();
     if (!captureQuizAnswer()) return;
-    if (quizIndex < QUIZ_STEPS.length - 1) { quizIndex++; renderQuiz(true); }
-    else renderProfileResult();
+    if (quizIndex < QUIZ_STEPS.length - 1) { 
+      quizIndex++; 
+      renderQuiz(1, true); // Avanzar
+    } else {
+      renderProfileResult();
+    }
   });
+  
   document.getElementById('quiz-back').addEventListener('click', () => {
     const step = QUIZ_STEPS[quizIndex];
     const selected = [...document.getElementById('quiz-step').querySelectorAll('input:checked')].map(i => i.value);
     quizAnswers[step.key] = step.multiple ? selected : (selected[0] || '');
     quizIndex = Math.max(0, quizIndex - 1);
-    renderQuiz(true);
+    renderQuiz(-1, true); // Retroceder
   });
+  
   document.getElementById('quiz-result').addEventListener('click', event => {
-    if (event.target.closest('#quiz-restart')) { quizAnswers = {}; quizIndex = 0; renderQuiz(true); }
+    if (event.target.closest('#quiz-restart')) { 
+      quizAnswers = {}; 
+      quizIndex = 0; 
+      renderQuiz(1, true); 
+    }
   });
-  renderQuiz();
+  
+  renderQuiz(1); // Inicio
 }

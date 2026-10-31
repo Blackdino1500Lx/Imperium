@@ -20,7 +20,6 @@ async function loadOrders() {
 }
 
 function renderOrdersTable(orders) {
-  // En este paso reemplazamos el contenido de la pestaña
   const container = document.getElementById('tab-pedidos');
   container.innerHTML = `
     <div class="panel-header">
@@ -115,6 +114,7 @@ async function openOrderDetail(id) {
       <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
         <button class="button outline small" id="btn-copy-link">Copiar enlace de seguimiento</button>
         <button class="button outline small" id="btn-wa-client">Enviar por WhatsApp</button>
+        <button class="button gold small" id="btn-print-invoice">Imprimir Factura</button>
       </div>
 
       <div class="dialog-actions">
@@ -140,6 +140,82 @@ async function openOrderDetail(id) {
     window.open(`https://wa.me/${order.customer_phone.replace(/\D/g,'')}?text=${encodeURIComponent(text)}`, '_blank');
   });
 
+  // LÓGICA DE CREACIÓN DE FACTURA
+  dialog.querySelector('#btn-print-invoice').addEventListener('click', () => {
+    // Crear un contenedor para la factura
+    const invoiceContainer = document.createElement('div');
+    invoiceContainer.className = 'print-container';
+    
+    const dateStr = new Date(order.created_at).toLocaleString('es-CR');
+    
+    // Armar HTML de la factura
+    invoiceContainer.innerHTML = `
+      <div class="invoice-header">
+        <div class="invoice-brand">
+          <h1>IMPERIUM</h1>
+          <p>Perfumería en Costa Rica</p>
+          <p>WhatsApp: +506 7199-6225</p>
+          <p>Instagram: @imperium__cr</p>
+        </div>
+        <div class="invoice-info">
+          <h2>FACTURA</h2>
+          <p><strong>Pedido:</strong> ${order.number}</p>
+          <p><strong>Fecha:</strong> ${dateStr}</p>
+          <p><strong>Estado:</strong> ${order.status.toUpperCase()}</p>
+        </div>
+      </div>
+
+      <div class="invoice-client">
+        <h3>Datos del Cliente</h3>
+        <p><strong>Nombre:</strong> ${escapeHtml(order.customer_name)}</p>
+        <p><strong>Teléfono:</strong> ${escapeHtml(order.customer_phone)}</p>
+      </div>
+
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th style="text-align: center;">Cant.</th>
+            <th style="text-align: right;">Precio Unit.</th>
+            <th style="text-align: right;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(i => `
+            <tr>
+              <td>${escapeHtml(i.brand)} ${escapeHtml(i.name)} ${i.size ? '('+i.size+'ml)' : ''}</td>
+              <td style="text-align: center;">${i.quantity}</td>
+              <td style="text-align: right;">${formatPrice(i.unit_price)}</td>
+              <td style="text-align: right;">${formatPrice(i.unit_price * i.quantity)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+
+      <div class="invoice-totals">
+        <div class="total-row">
+          <span>Total:</span>
+          <strong>${formatPrice(order.total)}</strong>
+        </div>
+      </div>
+
+      <div class="invoice-footer">
+        <p>¡Gracias por tu compra!</p>
+        <p>Disponibilidad, entrega y pago coordinados directamente con Imperium.</p>
+      </div>
+    `;
+
+    document.body.appendChild(invoiceContainer);
+    
+    // Ejecutar la impresión nativa
+    window.print();
+    
+    // Limpiar después de imprimir
+    setTimeout(() => {
+      document.body.removeChild(invoiceContainer);
+    }, 1000);
+  });
+
   dialog.querySelector('#btn-save-status').addEventListener('click', async () => {
     const newStatus = dialog.querySelector('#new-status').value;
     const note = dialog.querySelector('#status-note').value;
@@ -154,9 +230,7 @@ async function openOrderDetail(id) {
     btn.textContent = 'Guardando...';
 
     try {
-      // Actualizar order
       await supabase.schema('imperium').from('orders').update({ status: newStatus }).eq('id', id);
-      // Insertar evento
       await supabase.schema('imperium').from('order_events').insert([{
         order_id: id,
         status: newStatus,

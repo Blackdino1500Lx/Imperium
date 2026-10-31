@@ -46,13 +46,11 @@ function initMenu() {
   });
 }
 
-// Arranca la tienda leyendo la base de datos.
 async function init() {
   const grid = document.getElementById('catalog-grid');
   const errorState = document.getElementById('api-error');
   
   try {
-    // Hacemos TODAS las peticiones a la vez (en paralelo) para que sea mucho más rápido
     const [products, config, banners, collections] = await Promise.all([
       getProducts(), 
       getSettings(),
@@ -60,7 +58,16 @@ async function init() {
       getCollections()
     ]);
     
-    initCatalog(products, Number(config.pageSize) || 48, collections);
+    const heroSection = document.getElementById('inicio');
+    if (banners && banners.length > 0) {
+      heroSection.hidden = true;
+    } else {
+      heroSection.hidden = false;
+    }
+
+    // CAMBIO: Forzamos 10 por defecto si no hay valor en la DB (|| 10)
+    initCatalog(products, Number(config.pageSize) || 10, collections);
+    
     initProductModal(config);
     initCart(products, config);
     initQuiz(config);
@@ -68,7 +75,6 @@ async function init() {
     renderSettings(config);
     initMenu();
 
-    // Checkout (limpieza del carrito sin recargar la página)
     initCheckout(config, products, () => {
       clearCart();
       renderCart();
