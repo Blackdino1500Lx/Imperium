@@ -1,9 +1,12 @@
-// Ficha de producto: apertura, notas, navegación y enlace de WhatsApp.
+// Ficha de producto: apertura, notas, perfil de uso, navegación y WhatsApp.
 import { filters, selectProducts } from './filtros.js';
 import { escapeHtml, formatPrice, whatsappUrl, visualHtml, AVAILABILITY } from './utils.js';
 import { findProduct, getProducts } from './catalogo.js';
 import { addToCart } from './carrito.js';
 import { getProductDetails } from './api.js';
+import { analyzeProduct, buildCharacterLine, buildUsagePhrase } from './usage.js';
+
+const DEFAULT_USAGE_NOTICE = 'Uso sugerido a partir de las notas publicadas; elige la ocasión según tus preferencias y el clima.';
 
 let config = {};
 let activeId = null;
@@ -39,32 +42,33 @@ export async function openProduct(id) {
   if (!p) return;
   document.getElementById('modal-cart-status').textContent = '';
   activeId = id;
-  
-  // Mostramos el modal con los datos básicos que ya tenemos
+
   refreshModal(p);
   document.getElementById('product-dialog').showModal();
   document.body.style.overflow = 'hidden';
 
-  // Si el producto no tiene las notas cargadas (porque vinieron en carga diferida)
   if (p.top === undefined) {
-    // Mostramos un loader en la sección de notas
     const notesSection = document.getElementById('modal-notes');
     notesSection.innerHTML = '<p style="color: var(--muted); font-size: 14px;">Cargando notas olfativas...</p>';
     notesSection.hidden = false;
 
-    // Pedimos las notas a la base de datos
     const details = await getProductDetails(p.id);
     if (details) {
       p.top = details.top;
       p.heart = details.heart;
       p.base = details.base;
+      if (details.usageOverride !== undefined) p.usageOverride = details.usageOverride;
+      if (details.usage_override !== undefined) p.usageOverride = details.usage_override;
+      if (details.perfumeDescription) p.perfumeDescription = details.perfumeDescription;
+      if (details.usageSuggestion)    p.usageSuggestion    = details.usageSuggestion;
+      if (details.usageNotice)        p.usageNotice        = details.usageNotice;
     } else {
-      p.top = null; p.heart = null; p.base = null; // Evitar bucle infinito de carga
+      p.top = null; p.heart = null; p.base = null;
     }
-    
-    // Si el usuario no ha cerrado el modal ni cambiado a otro producto mientras cargaba, pintamos las notas
+
     if (activeId === id) {
       renderProductNotes(p);
+      renderProductGuide(p);
     }
   }
 }
@@ -83,10 +87,11 @@ export function refreshModal(p) {
   reference.textContent = p.photoSource ? 'Imagen de referencia. El tamaño o empaque puede variar.' : '';
   const facts = [['Tamaño', p.size ? p.size + ' ml' : ''], ['Categoría', p.category], ['Disponibilidad', AVAILABILITY[p.availability]]];
   document.getElementById('modal-facts').innerHTML = facts.filter(([, v]) => v).map(([label, value]) => '<div class="fact-row"><dt>' + label + '</dt><dd>' + escapeHtml(value) + '</dd></div>').join('');
-  
+
   renderProductNotes(p);
+  renderProductGuide(p);
   renderProductNavigation(p);
-  
+
   const link = document.getElementById('modal-whatsapp');
   link.href = whatsappUrl(config.whatsapp, p);
   link.textContent = p.availability === 'agotado' ? 'Consultar por WhatsApp' : 'Pedir por WhatsApp';
@@ -99,14 +104,55 @@ function renderProductNotes(p) {
   const section = document.getElementById('modal-notes');
   const levels = [['Salida', p.top], ['Corazón', p.heart], ['Fondo', p.base]].filter(([, value]) => value);
   const summary = p.notesSummary || '', notice = p.notesNotice || '';
-  
-  if (levels.length === 0 && !summary && !notice && p.top === undefined) return; // Aún no se han cargado
-  
+
+  if (levels.length === 0 && !summary && !notice && p.top === undefined) return;
+
   section.hidden = !levels.length && !summary && !notice;
   section.innerHTML =
     (levels.length ? '<h3>Notas olfativas</h3><ol class="notes-pyramid">' + levels.map(([label, value]) => '<li class="note-level"><strong>' + label + '</strong><p>' + escapeHtml(value) + '</p></li>').join('') + '</ol>' : '') +
     (summary ? (levels.length ? '<p class="notes-featured"><strong>Notas destacadas:</strong> ' : '<h3>Notas destacadas</h3><p class="notes-featured">') + escapeHtml(summary) + '</p>' : '') +
     (notice ? '<p class="notes-notice">' + escapeHtml(notice) + '</p>' : '');
+}
+
+function renderProductGuide(p) {
+  const section = document.getElementById('modal-guide');
+  if (!section) return;
+
+  // Override manual > calculado
+  const manual = p.usageOverride || p.usage_override || p.usageSuggestion || '';
+
+  const analysis = analyzeProduct(p);
+  const character = buildCharacterLine(analysis);
+  const usage = manual || buildUsagePhrase(analysis);
+
+  const notice = p.usageNotice !== undefined
+    ? p.usageNotice
+    : (usage || character ? DEFAULT_USAGE_NOTICE : '');
+
+  if (!character && !usage && !notice && p.top === undefined) {
+    section.hidden = true;
+    return;
+  }
+  if (!character && !usage && !notice) {
+    section.hidden = true;
+    section.innerHTML = '';
+    return;
+  }
+
+  section.hidden = false;
+  section.innerHTML =
+    '<h3>Perfil y uso</h3>' +
+    (character ? `<p class="perfume-character"><strong>Carácter:</strong> ${escapeHtml(character)}.</p>` : '') +
+    (usage ? `<dl class="product-facts"><div class="fact-row"><dt>Uso sugerido</dt><dd>${escapeHtml(usage)}</dd></div></dl>` : '') +
+    (notice ? `<p class="notes-notice">${escapeHtml(notice)}</p>` : '');
+
+  if (analysis) {
+    section.dataset.families = analysis.families.join(',');
+    section.dataset.momento  = analysis.momento || '';
+    section.dataset.clima    = analysis.clima || '';
+    section.dataset.formalidad = analysis.formalidad || '';
+    //section.dataset.ocasion  = analysis.ocasion.join(',');
+  }
 }
 
 function renderProductNavigation(p) {
@@ -123,6 +169,6 @@ function navigateProduct(direction) {
   const index = selected.findIndex(p => p.id === activeId);
   const next = selected[index + direction];
   if (index < 0 || !next) return;
-  openProduct(next.id); // Usamos openProduct para que también cargue las notas del siguiente
+  openProduct(next.id);
   document.getElementById('product-dialog').scrollTop = 0;
 }

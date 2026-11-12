@@ -159,12 +159,10 @@
       <input type="hidden" name="id">
       
       <div class="form-grid">
-        <!-- AHORA ES UN INPUT CON DATALIST -->
         <label>Marca
           <input type="text" name="brand" id="prod-brand" list="brand-options" required autocomplete="off" placeholder="Elige una o escribe una nueva">
           <datalist id="brand-options"></datalist>
         </label>
-        <!-- FIN -->
         
         <label>Nombre
           <input type="text" name="name" required>
@@ -199,6 +197,9 @@
         </label>
         <label>Notas de fondo
           <input type="text" name="base">
+        </label>
+        <label class="full-span">Uso sugerido (opcional, sobrescribe el cálculo automático)
+          <textarea name="usage_override" rows="3" placeholder="Déjalo vacío para calcularlo a partir de las notas. Si escribes algo aquí, este texto se muestra tal cual."></textarea>
         </label>
       </div>
 

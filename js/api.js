@@ -11,6 +11,7 @@ function mapProduct(p) {
     photo: p.image_url,
     photoSource: p.photo_source,
     notesSummary: p.notes_summary,
+    usageOverride: p.usage_override,
     collections: p.product_collections ? p.product_collections.map(c => c.collection_id) : []
   };
 }
@@ -33,12 +34,17 @@ export async function getProducts() {
 export async function getProductDetails(id) {
   const { data, error } = await supabase.schema('imperium')
     .from('products')
-    .select('top, heart, base')
+    .select('top, heart, base, usage_override')
     .eq('id', id)
     .single();
     
   if (error) return null;
-  return data;
+  return {
+    top: data.top,
+    heart: data.heart,
+    base: data.base,
+    usageOverride: data.usage_override
+  };
 }
 
 export async function getSettings() {

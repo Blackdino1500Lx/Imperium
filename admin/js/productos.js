@@ -132,6 +132,7 @@ async function setupDialog(id = null) {
       form.elements.top.value = data.top || '';
       form.elements.heart.value = data.heart || '';
       form.elements.base.value = data.base || '';
+      form.elements.usage_override.value = data.usage_override || '';
       if (data.image_url) {
         const prev = document.getElementById('prod-image-preview');
         prev.style.backgroundImage = `url('${data.image_url}')`;
@@ -216,6 +217,7 @@ export function initProductos() {
         top: form.elements.top.value,
         heart: form.elements.heart.value,
         base: form.elements.base.value,
+        usage_override: form.elements.usage_override.value.trim() || null,
       };
       if (imageUrl) payload.image_url = imageUrl;
 
