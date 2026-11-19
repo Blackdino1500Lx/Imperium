@@ -11,6 +11,8 @@ const loginError = document.getElementById('login-error');
 const logoutBtn = document.getElementById('logout-btn');
 
 let isInit = false;
+// Id del usuario cuyo panel ya fue inicializado (evita repetir al volver a la pestaña)
+let currentUserId = null;
 
 // Verifica si el usuario tiene permisos consultando la tabla admins
 async function checkAdminRole(userId) {
@@ -65,6 +67,7 @@ export function initAuth(onLoginSuccess) {
 
     logoutBtn.addEventListener('click', async () => {
       await supabase.auth.signOut();
+      currentUserId = null;
       showLogin();
     });
 
@@ -72,20 +75,35 @@ export function initAuth(onLoginSuccess) {
   }
 
   // Escuchar estado de sesión
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    if (session) {
+  // Nota: supabase-js dispara este callback al cargar (INITIAL_SESSION / SIGNED_IN),
+  // al refrescar el token y cada vez que se vuelve a la pestaña del navegador.
+  // Por eso solo se actúa cuando cambia el usuario, no en cada evento.
+  supabase.auth.onAuthStateChange((event, session) => {
+    // setTimeout evita llamar a supabase con await dentro del callback (puede bloquear)
+    setTimeout(async () => {
+      if (!session) {
+        currentUserId = null;
+        showLogin();
+        return;
+      }
+
+      // Mismo usuario ya inicializado (volver a la pestaña, token refrescado): no hacer nada
+      if (session.user.id === currentUserId) return;
+
+      // Se marca antes del await para que eventos simultáneos no entren dos veces
+      currentUserId = session.user.id;
+
       const isAdmin = await checkAdminRole(session.user.id);
       if (isAdmin) {
         showAdmin();
         if (onLoginSuccess) onLoginSuccess();
       } else {
+        currentUserId = null;
         await supabase.auth.signOut();
         loginError.textContent = 'No tienes permiso de administrador.';
         loginError.hidden = false;
         showLogin();
       }
-    } else {
-      showLogin();
-    }
+    }, 0);
   });
 }

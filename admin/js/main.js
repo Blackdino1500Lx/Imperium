@@ -3,7 +3,7 @@ import { initProductos } from './productos.js';
 import { initBanners } from './banners.js';
 import { initAjustes } from './ajustes.js';
 import { initPedidos } from './pedidos.js';
-import { initColecciones } from './colecciones.js'; // <-- NUEVO
+import { initColecciones } from './colecciones.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const navButtons = document.querySelectorAll('.admin-nav button');
@@ -24,11 +24,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Los módulos registran listeners, así que solo deben inicializarse una vez
+  let started = false;
+
   initAuth(() => {
+    if (started) return;
+    started = true;
+
     initProductos();
     initBanners();
     initAjustes();
     initPedidos();
-    initColecciones(); // <-- NUEVO
+    initColecciones();
   });
 });
