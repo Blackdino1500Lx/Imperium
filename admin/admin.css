@@ -55,13 +55,19 @@ button { cursor: pointer; }
 
 /* Tablas (con scroll horizontal en móvil) */
 .table-wrap { background: var(--white); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 600px; }
+table { width: 100%; border-collapse: collapse; text-align: left; min-width: 760px; }
 th, td { padding: 15px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 th { background: var(--paper); font-weight: 600; color: var(--navy); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
 td img { width: 40px; height: 50px; object-fit: cover; background: var(--paper); border-radius: 4px; }
 .status-badge { display: inline-block; padding: 4px 10px; font-size: 12px; border-radius: 50px; font-weight: 500; }
 .status-badge.active { background: #e8f5e9; color: #2e7d32; }
 .status-badge.inactive { background: #ffebee; color: #c62828; }
+
+/* Disponibilidad */
+.status-badge.avail-disponible { background: #e0f2f1; color: #00695c; }
+.status-badge.avail-pocas { background: #fff4e0; color: #9a6200; }
+.status-badge.avail-agotado { background: #2b2f3a; color: #ffffff; }
+.status-badge.avail-confirmar { background: #eceff1; color: #546e7a; }
 .actions-cell { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
@@ -84,6 +90,15 @@ td img { width: 40px; height: 50px; object-fit: cover; background: var(--paper);
 .image-upload { margin-bottom: 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 .preview-box { width: 120px; height: 120px; border: 2px dashed var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--muted); background-size: cover; background-position: center; flex-shrink: 0; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--line); padding-top: 20px; }
+
+/* Detalles del producto */
+.details-layout { display: grid; grid-template-columns: 160px 1fr; gap: 24px; margin-bottom: 20px; align-items: start; }
+.details-image { width: 160px; height: 200px; object-fit: cover; background: var(--paper); border-radius: 8px; border: 1px solid var(--line); }
+.details-list { margin: 0; }
+.details-list > div { display: grid; grid-template-columns: 140px 1fr; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.details-list > div:first-child { padding-top: 0; }
+.details-list dt { color: var(--muted); font-size: 13px; }
+.details-list dd { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
 
 .settings-form { background: var(--white); padding: 30px; border: 1px solid var(--line); border-radius: 8px; max-width: 800px; }
 .settings-form textarea { resize: vertical; min-height: 80px; }
@@ -119,6 +134,11 @@ td img { width: 40px; height: 50px; object-fit: cover; background: var(--paper);
   .dialog-actions { flex-direction: column-reverse; }
   .dialog-actions .button { width: 100%; }
   
+  /* Detalles apilados */
+  .details-layout { grid-template-columns: 1fr; }
+  .details-image { width: 100%; height: 220px; }
+  .details-list > div { grid-template-columns: 110px 1fr; }
+
   /* Imagen de upload apilada */
   .image-upload { flex-direction: column; align-items: flex-start; }
   .preview-box { width: 100%; height: 180px; }

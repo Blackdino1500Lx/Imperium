@@ -86,10 +86,6 @@
         <div class="hero-copy">
           <h1 id="hero-title">Cargando...</h1>
           <p id="hero-description"></p>
-          <div class="hero-buttons">
-            <a class="button" href="#catalogo">Ver catálogo</a>
-            <a class="button outline" href="#perfil-olfativo">Descubrir mi perfil</a>
-          </div>
         </div>
         <div class="logo-stage">
           <svg class="star one" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 0 20 12 32 16 20 20 16 32 12 20 0 16 12 12Z"></path></svg>
@@ -98,27 +94,6 @@
           <div class="logo-arch">
             <img class="hero-logo" src="assets/img/logo.svg" width="1254" height="1254" alt="Logo dorado de Imperium con monograma y estrella de cuatro puntas">
           </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="perfil-olfativo" class="profile-section" aria-labelledby="profile-title">
-      <div class="wrap profile-layout">
-        <div class="profile-intro">
-          <h2 id="profile-title">Un perfume que vaya contigo.</h2>
-          <p>Cuéntanos qué aromas te gustan y cómo quieres usarlos. En siete pasos tendrás un perfil para orientar tu elección.</p>
-        </div>
-        <div class="profile-panel">
-          <form id="profile-quiz">
-            <p id="quiz-progress" class="quiz-progress" aria-live="polite"></p>
-            <div id="quiz-step"></div>
-            <p id="quiz-error" class="quiz-error" role="alert" hidden></p>
-            <div class="quiz-actions">
-              <button id="quiz-back" class="text-button" type="button">Anterior</button>
-              <button id="quiz-next" class="button ink" type="submit">Continuar</button>
-            </div>
-          </form>
-          <div id="quiz-result" class="quiz-result" aria-live="polite" hidden></div>
         </div>
       </div>
     </section>
@@ -196,6 +171,27 @@
           <button id="load-more" class="button ink" type="button">Ver más perfumes</button>
         </div>
         <noscript><p>Activa JavaScript en tu navegador para ver y filtrar el catálogo completo.</p></noscript>
+      </div>
+    </section>
+
+    <section id="perfil-olfativo" class="profile-section" aria-labelledby="profile-title">
+      <div class="wrap profile-layout">
+        <div class="profile-intro">
+          <h2 id="profile-title">Un perfume que vaya contigo.</h2>
+          <p>Cuéntanos qué aromas te gustan y cómo quieres usarlos. En siete pasos tendrás un perfil para orientar tu elección.</p>
+        </div>
+        <div class="profile-panel">
+          <form id="profile-quiz">
+            <p id="quiz-progress" class="quiz-progress" aria-live="polite"></p>
+            <div id="quiz-step"></div>
+            <p id="quiz-error" class="quiz-error" role="alert" hidden></p>
+            <div class="quiz-actions">
+              <button id="quiz-back" class="text-button" type="button">Anterior</button>
+              <button id="quiz-next" class="button ink" type="submit">Continuar</button>
+            </div>
+          </form>
+          <div id="quiz-result" class="quiz-result" aria-live="polite" hidden></div>
+        </div>
       </div>
     </section>
 

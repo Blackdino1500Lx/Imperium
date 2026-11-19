@@ -100,7 +100,6 @@ h1, h2 { line-height: 1.05; letter-spacing: -.02em; }
 .hero h1 { font-size: clamp(46px, 5.6vw, 76px); max-width: 660px; }
 .hero h1 span { color: #d8b768; }
 .hero-copy > p { color: #cbd2df; max-width: 415px; margin-top: 28px; font-size: 17px; line-height: 1.7; }
-.hero-buttons { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 34px; }
 .hero-circles { position: absolute; width: 750px; height: 750px; border: 1px solid #b08d3c20; border-radius: 50%; top: -400px; left: -500px; pointer-events: none; }
 .hero-circles::after { content: ''; position: absolute; inset: -100px; border: 1px solid #b08d3c15; border-radius: 50%; }
 .logo-stage { position: relative; width: 100%; max-width: 425px; margin: auto; padding: 12px; }
@@ -185,7 +184,7 @@ select { padding-right: 7px; }
 .empty-state p { color: var(--muted); margin-bottom: 18px; }
 
 /* QUIZ */
-.profile-section { padding-block: 78px; }
+.profile-section { padding-block: 78px; background: var(--paper); border-top: 1px solid var(--line); }
 .profile-layout { display: grid; grid-template-columns: .8fr 1.2fr; gap: 8%; align-items: start; }
 .profile-intro h2 { font-size: clamp(39px,4vw,54px); margin-bottom: 22px; }
 .profile-intro p { color: var(--muted); max-width: 350px; }
@@ -195,7 +194,7 @@ select { padding-right: 7px; }
 .quiz-fieldset legend { font: 500 31px/1.15 var(--serif); margin-bottom: 12px; }
 .quiz-help { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
 .quiz-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
-.quiz-option { position: relative; display: flex; align-items: center; gap: 11px; padding: 14px; border: 1px solid var(--line); min-height: 56px; cursor: pointer; border-radius: var(--radius-sm); transition: all .2s; }
+.quiz-option { position: relative; display: flex; align-items: center; gap: 11px; padding: 14px; border: 1px solid var(--line); background: var(--white); min-height: 56px; cursor: pointer; border-radius: var(--radius-sm); transition: all .2s; }
 .quiz-option:hover { border-color: var(--gold); }
 .quiz-option:has(input:checked) { border-color: var(--gold-ink); background: #f8f4e9; box-shadow: 0 2px 8px rgba(176, 141, 60, 0.15); }
 .quiz-option input { width: 17px; height: 17px; min-height: 0; padding: 0; flex-shrink: 0; accent-color: var(--gold-ink); }
@@ -370,7 +369,7 @@ select { padding-right: 7px; }
   .header-whatsapp { width: 42px; height: 43px; padding: 9px; } .whatsapp-label { display: none; } .whatsapp-symbol { display: block; }
   .hero-inner { grid-template-columns: 1fr; gap: 38px; min-height: 0; padding-block: 52px 42px; }
   .hero h1 { font-size: clamp(43px,8vw,61px); max-width: 600px; } .hero-copy > p { margin-top: 22px; font-size: 16px; max-width: 500px; }
-  .hero-buttons { margin-top: 27px; } .logo-stage { max-width: 350px; width: 87%; } .logo-arch { min-height: 360px; } .hero-logo { max-height: 290px; margin-top: 25px; }
+  .logo-stage { max-width: 350px; width: 87%; } .logo-arch { min-height: 360px; } .hero-logo { max-height: 290px; margin-top: 25px; }
   .catalog-section { padding-block: 53px; } .section-heading { display: block; margin-bottom: 23px; } .section-heading p { margin-top: 17px; }
   .filter-bar { grid-template-columns: minmax(0,1fr) auto; gap: 10px; padding: 12px 0; } .filter-bar .search-field .field-label { display: none; }
   .filter-toggle { display: flex; align-items: center; justify-content: center; gap: 7px; background: var(--white); border: 1px solid #d4d7df; padding: 10px 13px; min-height: 44px; font-size: 14px; }
@@ -386,7 +385,7 @@ select { padding-right: 7px; }
   .header-cart { padding: 7px; gap: 4px; } .cart-label { display: none; } .cart-count { min-width: 15px; padding-inline: 2px; font-size: 10px; }
 }
 @media (max-width:430px) { 
-  .wrap { width: calc(100% - 30px); } .hero-buttons .button { padding: 11px 19px; } .hero h1 { font-size: 45px; } 
+  .wrap { width: calc(100% - 30px); } .hero h1 { font-size: 45px; } 
   .logo-stage { width: 86%; } .logo-arch { min-height: 315px; } .hero-logo { max-height: 250px; } 
   .product-brand { font-size: 11px; } .product-name { font-size: 21px; min-height: 50px; } .product-price { font-size: 15px; } 
   .placeholder-brand { font-size: 10px; bottom: 17px; letter-spacing: .04em; } .availability-badge { top: 9px; left: 8px; font-size: 11px; padding: 4px 7px; } 

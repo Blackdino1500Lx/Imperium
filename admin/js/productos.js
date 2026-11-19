@@ -7,6 +7,16 @@ let totalProducts = 0;
 let searchQuery = '';
 let activeFilter = 'true';
 
+// Textos de disponibilidad (coinciden con el select del formulario)
+const AVAILABILITY = {
+  disponible: 'Disponible',
+  pocas: 'Pocas unidades',
+  agotado: 'Agotado',
+  confirmar: 'Por confirmar',
+};
+// Productos de la página actual, para abrir el detalle sin otra consulta
+const productsById = new Map();
+
 // Evita registrar los listeners más de una vez si initProductos se llama de nuevo
 let initialized = false;
 // Evita dobles envíos del formulario mientras hay un guardado en curso
@@ -50,7 +60,7 @@ async function uploadImage(base64Str, fileName) {
 // Carga la tabla de productos
 async function loadProducts() {
   const tbody = document.querySelector('#prod-table tbody');
-  tbody.innerHTML = '<tr><td colspan="6">Cargando...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7">Cargando...</td></tr>';
 
   let query = supabase.schema('imperium').from('products').select('*', { count: 'exact' });
 
@@ -62,16 +72,23 @@ async function loadProducts() {
 
   const { data, count, error } = await query.range(from, to).order('brand', { ascending: true });
 
-  if (error) { tbody.innerHTML = '<tr><td colspan="6">Error al cargar productos.</td></tr>'; return; }
+  if (error) { tbody.innerHTML = '<tr><td colspan="7">Error al cargar productos.</td></tr>'; return; }
 
   totalProducts = count || 0;
   renderTable(data);
   renderPagination();
 }
 
+function availabilityBadge(value) {
+  const key = AVAILABILITY[value] ? value : 'confirmar';
+  return `<span class="status-badge avail-${key}">${AVAILABILITY[key]}</span>`;
+}
+
 function renderTable(data) {
   const tbody = document.querySelector('#prod-table tbody');
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="6">No hay productos.</td></tr>'; return; }
+  productsById.clear();
+  data.forEach(p => productsById.set(String(p.id), p));
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7">No hay productos.</td></tr>'; return; }
 
   tbody.innerHTML = data.map(p => `
     <tr>
@@ -79,10 +96,14 @@ function renderTable(data) {
       <td>${p.brand}</td>
       <td>${p.name}</td>
       <td>₡${Number(p.price).toLocaleString('de-DE')}</td>
+      <td>${availabilityBadge(p.availability)}</td>
       <td><span class="status-badge ${p.active ? 'active' : 'inactive'}">${p.active ? 'Activo' : 'Inactivo'}</span></td>
-      <td class="actions-cell">
-        <button class="button outline small" data-edit="${p.id}">Editar</button>
-        <button class="button danger small" data-toggle="${p.id}" data-active="${p.active}">${p.active ? 'Desactivar' : 'Activar'}</button>
+      <td>
+        <div class="actions-cell">
+          <button class="button outline small" data-details="${p.id}">Detalles</button>
+          <button class="button outline small" data-edit="${p.id}">Editar</button>
+          <button class="button danger small" data-toggle="${p.id}" data-active="${p.active}">${p.active ? 'Desactivar' : 'Activar'}</button>
+        </div>
       </td>
     </tr>
   `).join('');
@@ -111,6 +132,32 @@ async function loadBrands(selectedBrand = '') {
   } else {
     document.getElementById('prod-brand').value = '';
   }
+}
+
+// Muestra el detalle (solo lectura) de un producto de la tabla
+function showDetails(id) {
+  const p = productsById.get(String(id));
+  if (!p) return;
+  const dialog = document.getElementById('dialog-details');
+  const set = (field, value) => {
+    dialog.querySelector(`[data-field="${field}"]`).textContent = value || '—';
+  };
+
+  set('brand', p.brand);
+  set('name', p.name);
+  set('price', `₡${Number(p.price).toLocaleString('de-DE')}`);
+  set('size', p.size);
+  set('category', p.category);
+  set('availability', AVAILABILITY[p.availability] || AVAILABILITY.confirmar);
+  set('status', p.active ? 'Activo' : 'Inactivo');
+  set('top', p.top);
+  set('heart', p.heart);
+  set('base', p.base);
+  set('usage', p.usage_override || 'Se calcula automáticamente a partir de las notas');
+
+  document.getElementById('details-image').src = p.image_url || '../assets/img/logo.svg';
+  document.getElementById('details-edit').dataset.id = p.id;
+  dialog.showModal();
 }
 
 // Configura el dialog de creación/edición
@@ -182,9 +229,11 @@ export function initProductos() {
 
   // Delegación en la tabla
   document.querySelector('#prod-table tbody').addEventListener('click', async (e) => {
+    const detailsBtn = e.target.closest('[data-details]');
     const editBtn = e.target.closest('[data-edit]');
     const toggleBtn = e.target.closest('[data-toggle]');
 
+    if (detailsBtn) showDetails(detailsBtn.dataset.details);
     if (editBtn) setupDialog(editBtn.dataset.edit);
 
     if (toggleBtn) {
@@ -194,6 +243,12 @@ export function initProductos() {
       if (error) { console.error(error); alert('Error al cambiar el estado del producto.'); }
       loadProducts();
     }
+  });
+
+  // Botón "Editar" dentro del detalle
+  document.getElementById('details-edit').addEventListener('click', (e) => {
+    document.getElementById('dialog-details').close();
+    setupDialog(e.currentTarget.dataset.id);
   });
 
   // Guardar producto

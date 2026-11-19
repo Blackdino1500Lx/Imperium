@@ -62,6 +62,7 @@
                 <th>Marca</th>
                 <th>Nombre</th>
                 <th>Precio</th>
+                <th>Disponibilidad</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -215,6 +216,31 @@
         <button type="submit" class="button gold">Guardar</button>
       </div>
     </form>
+  </dialog>
+
+  <!-- Dialog de detalles del producto (solo lectura) -->
+  <dialog id="dialog-details" class="admin-dialog">
+    <h3 id="details-title">Detalles del producto</h3>
+    <div class="details-layout">
+      <img id="details-image" class="details-image" src="" alt="">
+      <dl class="details-list">
+        <div><dt>Marca</dt><dd data-field="brand"></dd></div>
+        <div><dt>Nombre</dt><dd data-field="name"></dd></div>
+        <div><dt>Precio</dt><dd data-field="price"></dd></div>
+        <div><dt>Tamaño</dt><dd data-field="size"></dd></div>
+        <div><dt>Categoría</dt><dd data-field="category"></dd></div>
+        <div><dt>Disponibilidad</dt><dd data-field="availability"></dd></div>
+        <div><dt>Estado</dt><dd data-field="status"></dd></div>
+        <div><dt>Notas de salida</dt><dd data-field="top"></dd></div>
+        <div><dt>Notas de corazón</dt><dd data-field="heart"></dd></div>
+        <div><dt>Notas de fondo</dt><dd data-field="base"></dd></div>
+        <div><dt>Uso sugerido</dt><dd data-field="usage"></dd></div>
+      </dl>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="button outline" data-close-dialog>Cerrar</button>
+      <button type="button" class="button gold" id="details-edit">Editar</button>
+    </div>
   </dialog>
 
   <!-- Dialog para Banner -->
