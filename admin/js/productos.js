@@ -7,6 +7,11 @@ let totalProducts = 0;
 let searchQuery = '';
 let activeFilter = 'true';
 
+// Evita registrar los listeners más de una vez si initProductos se llama de nuevo
+let initialized = false;
+// Evita dobles envíos del formulario mientras hay un guardado en curso
+let saving = false;
+
 // Comprime la imagen a 700px WebP en base64
 export async function compressImage(file, maxSize = 700) {
   return new Promise((resolve, reject) => {
@@ -36,7 +41,7 @@ export async function compressImage(file, maxSize = 700) {
 async function uploadImage(base64Str, fileName) {
   const res = await fetch(base64Str);
   const blob = await res.blob();
-  const { data, error } = await supabase.storage.from('productos').upload(`${fileName}.webp`, blob, { contentType: 'image/webp', upsert: true });
+  const { error } = await supabase.storage.from('productos').upload(`${fileName}.webp`, blob, { contentType: 'image/webp', upsert: true });
   if (error) throw error;
   const { data: urlData } = supabase.storage.from('productos').getPublicUrl(`${fileName}.webp`);
   return urlData.publicUrl;
@@ -48,17 +53,17 @@ async function loadProducts() {
   tbody.innerHTML = '<tr><td colspan="6">Cargando...</td></tr>';
 
   let query = supabase.schema('imperium').from('products').select('*', { count: 'exact' });
-  
+
   if (activeFilter !== 'all') query = query.eq('active', activeFilter === 'true');
   if (searchQuery) query = query.or(`brand.ilike.%${searchQuery}%,name.ilike.%${searchQuery}%`);
 
   const from = currentPage * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
-  
+
   const { data, count, error } = await query.range(from, to).order('brand', { ascending: true });
-  
+
   if (error) { tbody.innerHTML = '<tr><td colspan="6">Error al cargar productos.</td></tr>'; return; }
-  
+
   totalProducts = count || 0;
   renderTable(data);
   renderPagination();
@@ -67,7 +72,7 @@ async function loadProducts() {
 function renderTable(data) {
   const tbody = document.querySelector('#prod-table tbody');
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="6">No hay productos.</td></tr>'; return; }
-  
+
   tbody.innerHTML = data.map(p => `
     <tr>
       <td><img src="${p.image_url || '../assets/img/logo.svg'}" alt=""></td>
@@ -97,10 +102,10 @@ function renderPagination() {
 async function loadBrands(selectedBrand = '') {
   const { data } = await supabase.schema('imperium').from('products').select('brand');
   const uniqueBrands = [...new Set((data || []).map(p => p.brand))].sort();
-  
+
   const datalist = document.getElementById('brand-options');
   datalist.innerHTML = uniqueBrands.map(b => `<option value="${b}"></option>`).join('');
-  
+
   if (selectedBrand) {
     document.getElementById('prod-brand').value = selectedBrand;
   } else {
@@ -114,6 +119,7 @@ async function setupDialog(id = null) {
   const form = document.getElementById('form-product');
   form.reset();
   form.elements.id.value = '';
+  form.dataset.isNew = 'false';
   document.getElementById('prod-image-preview').style.backgroundImage = 'none';
   document.getElementById('prod-image-preview').textContent = 'Sin imagen';
 
@@ -122,7 +128,7 @@ async function setupDialog(id = null) {
     const { data } = await supabase.schema('imperium').from('products').select('*').eq('id', id).single();
     if (data) {
       await loadBrands(data.brand);
-      
+
       form.elements.id.value = data.id;
       form.elements.name.value = data.name;
       form.elements.price.value = data.price;
@@ -142,11 +148,19 @@ async function setupDialog(id = null) {
   } else {
     document.getElementById('dlg-prod-title').textContent = 'Nuevo Producto';
     await loadBrands();
+    // El id se genera UNA sola vez al abrir el diálogo, así que aunque el
+    // guardado se ejecute varias veces, todas usan el mismo id (no duplica)
+    form.elements.id.value = `imp-${crypto.randomUUID()}`;
+    form.dataset.isNew = 'true';
   }
   dialog.showModal();
 }
 
 export function initProductos() {
+  // Si ya se inicializó, solo refresca la tabla (no duplica listeners)
+  if (initialized) { loadProducts(); return; }
+  initialized = true;
+
   loadProducts();
 
   // Buscador
@@ -176,7 +190,8 @@ export function initProductos() {
     if (toggleBtn) {
       const id = toggleBtn.dataset.toggle;
       const currentState = toggleBtn.dataset.active === 'true';
-      await supabase.schema('imperium').from('products').update({ active: !currentState }).eq('id', id);
+      const { error } = await supabase.schema('imperium').from('products').update({ active: !currentState }).eq('id', id);
+      if (error) { console.error(error); alert('Error al cambiar el estado del producto.'); }
       loadProducts();
     }
   });
@@ -184,9 +199,11 @@ export function initProductos() {
   // Guardar producto
   document.getElementById('form-product').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (saving) return; // ya hay un guardado en curso
+
     const form = e.target;
     const btn = form.querySelector('button[type="submit"]');
-    
+
     // La marca se toma directo del input
     const brandValue = form.elements.brand.value.trim();
     if (!brandValue) {
@@ -194,17 +211,18 @@ export function initProductos() {
       return;
     }
 
+    saving = true;
     btn.disabled = true; btn.textContent = 'Guardando...';
 
     try {
       const id = form.elements.id.value;
+      const isNew = form.dataset.isNew === 'true';
       const fileInput = document.getElementById('prod-image-file');
       let imageUrl = null;
 
       if (fileInput.files.length > 0) {
         const base64 = await compressImage(fileInput.files[0]);
-        const fileName = id || `prod-${Date.now()}`;
-        imageUrl = await uploadImage(base64, fileName);
+        imageUrl = await uploadImage(base64, id);
       }
 
       const payload = {
@@ -221,12 +239,17 @@ export function initProductos() {
       };
       if (imageUrl) payload.image_url = imageUrl;
 
-      if (id) {
-        await supabase.schema('imperium').from('products').update(payload).eq('id', id);
-      } else {
-        payload.id = `imp-${Date.now()}`;
+      if (isNew) {
+        // upsert con id fijo: si la petición se repite, no crea otra fila
+        payload.id = id;
         payload.active = true;
-        await supabase.schema('imperium').from('products').insert([payload]);
+        const { error } = await supabase.schema('imperium').from('products')
+          .upsert([payload], { onConflict: 'id' });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.schema('imperium').from('products')
+          .update(payload).eq('id', id);
+        if (error) throw error;
       }
 
       document.getElementById('dialog-product').close();
@@ -235,6 +258,7 @@ export function initProductos() {
       console.error(err);
       alert('Error al guardar el producto.');
     } finally {
+      saving = false;
       btn.disabled = false; btn.textContent = 'Guardar';
     }
   });
