@@ -369,7 +369,7 @@ select { padding-right: 7px; }
   .header-whatsapp { width: 42px; height: 43px; padding: 9px; } .whatsapp-label { display: none; } .whatsapp-symbol { display: block; }
   .hero-inner { grid-template-columns: 1fr; gap: 38px; min-height: 0; padding-block: 52px 42px; }
   .hero h1 { font-size: clamp(43px,8vw,61px); max-width: 600px; } .hero-copy > p { margin-top: 22px; font-size: 16px; max-width: 500px; }
-  .logo-stage { max-width: 350px; width: 87%; } .logo-arch { min-height: 360px; } .hero-logo { max-height: 290px; margin-top: 25px; }
+  .logo-stage { max-width: 280px; width: 70%; } .logo-arch { min-height: 270px; } .hero-logo { max-height: 210px; margin-top: 18px; }
   .catalog-section { padding-block: 53px; } .section-heading { display: block; margin-bottom: 23px; } .section-heading p { margin-top: 17px; }
   .filter-bar { grid-template-columns: minmax(0,1fr) auto; gap: 10px; padding: 12px 0; } .filter-bar .search-field .field-label { display: none; }
   .filter-toggle { display: flex; align-items: center; justify-content: center; gap: 7px; background: var(--white); border: 1px solid #d4d7df; padding: 10px 13px; min-height: 44px; font-size: 14px; }
@@ -386,7 +386,7 @@ select { padding-right: 7px; }
 }
 @media (max-width:430px) { 
   .wrap { width: calc(100% - 30px); } .hero h1 { font-size: 45px; } 
-  .logo-stage { width: 86%; } .logo-arch { min-height: 315px; } .hero-logo { max-height: 250px; } 
+  .logo-stage { width: 70%; } .logo-arch { min-height: 240px; } .hero-logo { max-height: 185px; } 
   .product-brand { font-size: 11px; } .product-name { font-size: 21px; min-height: 50px; } .product-price { font-size: 15px; } 
   .placeholder-brand { font-size: 10px; bottom: 17px; letter-spacing: .04em; } .availability-badge { top: 9px; left: 8px; font-size: 11px; padding: 4px 7px; } 
   .contact-grid { grid-template-columns: 1fr; gap: 27px; } .contact-grid h2 { margin-bottom: 5px; } 
