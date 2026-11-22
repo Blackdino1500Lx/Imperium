@@ -1,9 +1,9 @@
 // Checkout: captura datos, llama a la base de datos y abre WhatsApp.
 import { createOrder } from './api.js';
-import { formatPrice, fullName } from './utils.js';
+import { formatPrice, fullName, effectivePrice } from './utils.js';
 
 let config = {};
-let currentCart = {};
+let currentCart = []; // [{ id, size, quantity }]
 let allProducts = [];
 
 export function initCheckout(settings, cartData, updateCartCallback, openCartCallback) {
@@ -26,22 +26,22 @@ export function initCheckout(settings, cartData, updateCartCallback, openCartCal
 
     const name = document.getElementById('checkout-name').value.trim();
     const phone = document.getElementById('checkout-phone').value.trim();
-    const items = Object.keys(currentCart).map(id => ({ id: id, quantity: currentCart[id] }));
+    const items = currentCart.map(({ id, size, quantity }) => ({ id, size, quantity }));
     
     // Abrimos la ventana de WhatsApp de inmediato para que el navegador no la bloquee
     const waWindow = window.open('', '_blank');
 
-    // Respaldamos la info para el mensaje
-    const backupCart = { ...currentCart };
+    // Respaldamos la info para el mensaje (con el precio que paga el cliente: promoción si existe)
+    const backupCart = [...currentCart];
     let backupTotal = 0;
-    let backupLines = Object.keys(backupCart).map((id, index) => {
-      const p = allProducts.find(prod => prod.id === id);
-      const q = backupCart[id];
-      if (p) {
-        backupTotal += (p.price * q);
-        return `${index + 1}. ${fullName(p)} ${p.size ? '('+p.size+'ml)' : ''} - Cant: ${q} - Subtotal: ${formatPrice(p.price * q)}`;
-      }
-      return '';
+    let backupLines = backupCart.map((item, index) => {
+      const p = allProducts.find(prod => prod.id === item.id);
+      const pres = p && (p.presentations.find(x => x.size === item.size) || p.presentations[0]);
+      if (!p || !pres) return '';
+      const unit = effectivePrice(pres);
+      const promo = pres.sale_price != null ? ' [Promo]' : '';
+      backupTotal += unit * item.quantity;
+      return `${index + 1}. ${fullName(p)} ${pres.size ? '(' + pres.size + 'ml)' : ''}${promo} - Cant: ${item.quantity} - Subtotal: ${formatPrice(unit * item.quantity)}`;
     }).filter(Boolean);
 
     let orderNumber = '';

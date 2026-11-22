@@ -1,6 +1,6 @@
 // Ficha de producto: apertura, notas, perfil de uso, navegación y WhatsApp.
 import { filters, selectProducts } from './filtros.js';
-import { escapeHtml, formatPrice, whatsappUrl, visualHtml, AVAILABILITY } from './utils.js';
+import { escapeHtml, whatsappUrl, visualHtml, AVAILABILITY, findPresentation, effectivePrice, priceHtml, discountBadgeHtml, presentationLabel, hasSale } from './utils.js';
 import { findProduct, getProducts } from './catalogo.js';
 import { addToCart } from './carrito.js';
 import { getProductDetails } from './api.js';
@@ -10,11 +10,12 @@ const DEFAULT_USAGE_NOTICE = 'Uso sugerido a partir de las notas publicadas; eli
 
 let config = {};
 let activeId = null;
+let activeSize = null; // presentación elegida en la ficha
 
 export function initProductModal(settings) {
   config = settings;
   document.getElementById('modal-close').addEventListener('click', closeProduct);
-  document.getElementById('modal-add-cart').addEventListener('click', () => { if (activeId) addToCart(activeId); });
+  document.getElementById('modal-add-cart').addEventListener('click', () => { if (activeId) addToCart(activeId, activeSize); });
   document.getElementById('product-prev').addEventListener('click', () => navigateProduct(-1));
   document.getElementById('product-next').addEventListener('click', () => navigateProduct(1));
   document.getElementById('product-dialog').addEventListener('click', event => {
@@ -23,16 +24,30 @@ export function initProductModal(settings) {
   document.getElementById('product-dialog').addEventListener('close', () => {
     document.body.style.overflow = document.getElementById('cart-dialog').open ? 'hidden' : '';
     activeId = null;
+    activeSize = null;
   });
   document.addEventListener('click', event => {
-    const opener = event.target.closest('[data-open-id]');
-    if (opener) openProduct(opener.dataset.openId);
+    // data-choose-id: botón "Elegir presentación" de las tarjetas con varias presentaciones
+    const opener = event.target.closest('[data-open-id], [data-choose-id]');
+    if (opener) openProduct(opener.dataset.openId || opener.dataset.chooseId);
+  });
+  const picker = document.getElementById('modal-presentations');
+  if (picker) picker.addEventListener('click', event => {
+    const option = event.target.closest('[data-size]');
+    if (!option || !activeId) return;
+    const p = findProduct(activeId);
+    if (!p) return;
+    activeSize = option.dataset.size;
+    document.getElementById('modal-cart-status').textContent = '';
+    renderSelection(p);
+    const selected = picker.querySelector('[data-size="' + CSS.escape(activeSize) + '"]');
+    if (selected) selected.focus({ preventScroll: true });
   });
   document.addEventListener('error', event => {
     const image = event.target;
     if (image.tagName === 'IMG' && image.dataset.productImage) {
       const p = findProduct(image.dataset.productImage);
-      if (p && image.parentElement) image.parentElement.innerHTML = visualHtml({ ...p, photo: '' });
+      if (p && image.parentElement) image.parentElement.innerHTML = visualHtml({ ...p, photo: '' }, !!image.closest('#modal-visual'));
     }
   }, true);
 }
@@ -42,6 +57,7 @@ export async function openProduct(id) {
   if (!p) return;
   document.getElementById('modal-cart-status').textContent = '';
   activeId = id;
+  activeSize = defaultSize(p);
 
   refreshModal(p);
   document.getElementById('product-dialog').showModal();
@@ -77,27 +93,65 @@ export function closeProduct() {
   document.getElementById('product-dialog').close();
 }
 
+// Presentación con la que se abre la ficha: la primera que se pueda pedir
+function defaultSize(p) {
+  const list = p.presentations;
+  return (list.find(x => x.availability !== 'agotado') || list[0]).size;
+}
+
 export function refreshModal(p) {
   document.getElementById('modal-visual').innerHTML = visualHtml(p, true);
   document.getElementById('modal-brand').textContent = p.brand;
   document.getElementById('modal-title').textContent = p.name;
-  document.getElementById('modal-price').textContent = formatPrice(p.price);
   const reference = document.getElementById('photo-reference');
   reference.hidden = !p.photoSource;
   reference.textContent = p.photoSource ? 'Imagen de referencia. El tamaño o empaque puede variar.' : '';
-  const facts = [['Tamaño', p.size ? p.size + ' ml' : ''], ['Categoría', p.category], ['Disponibilidad', AVAILABILITY[p.availability]]];
-  document.getElementById('modal-facts').innerHTML = facts.filter(([, v]) => v).map(([label, value]) => '<div class="fact-row"><dt>' + label + '</dt><dd>' + escapeHtml(value) + '</dd></div>').join('');
 
+  renderSelection(p);
   renderProductNotes(p);
   renderProductGuide(p);
   renderProductNavigation(p);
+}
+
+// Parte de la ficha que cambia al elegir otra presentación: precio, datos, WhatsApp y botón del carrito
+function renderSelection(p) {
+  const pres = findPresentation(p, activeSize);
+  const multi = p.presentations.length > 1;
+
+  document.getElementById('modal-price').innerHTML = priceHtml(pres) + (hasSale(pres.price, pres.sale_price) ? ' ' + discountBadgeHtml(pres) : '');
+  renderPresentationPicker(p, pres);
+
+  const facts = [['Tamaño', !multi && pres.size ? pres.size + ' ml' : ''], ['Categoría', p.category], ['Disponibilidad', AVAILABILITY[pres.availability]]];
+  document.getElementById('modal-facts').innerHTML = facts.filter(([, v]) => v).map(([label, value]) => '<div class="fact-row"><dt>' + label + '</dt><dd>' + escapeHtml(value) + '</dd></div>').join('');
 
   const link = document.getElementById('modal-whatsapp');
-  link.href = whatsappUrl(config.whatsapp, p);
-  link.textContent = p.availability === 'agotado' ? 'Consultar por WhatsApp' : 'Pedir por WhatsApp';
+  link.href = whatsappUrl(config.whatsapp, p, pres);
+  link.textContent = pres.availability === 'agotado' ? 'Consultar por WhatsApp' : 'Pedir por WhatsApp';
   const addButton = document.getElementById('modal-add-cart');
-  addButton.disabled = p.availability === 'agotado';
-  addButton.textContent = p.availability === 'agotado' ? 'Agotado' : 'Añadir al carrito';
+  addButton.disabled = pres.availability === 'agotado';
+  addButton.textContent = pres.availability === 'agotado' ? 'Agotado' : 'Añadir al carrito';
+}
+
+// Botones de presentación (solo si el producto tiene más de una)
+function renderPresentationPicker(p, current) {
+  const box = document.getElementById('modal-presentations');
+  if (!box) return;
+  if (p.presentations.length < 2) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = '<p class="presentation-label">Presentación</p><div class="presentation-options" role="group" aria-label="Presentación">' +
+    p.presentations.map(x => {
+      const selected = x.size === current.size;
+      const price = hasSale(x.price, x.sale_price)
+        ? '<s class="price-old">' + formatPriceShort(x.price) + '</s> ' + formatPriceShort(x.sale_price)
+        : formatPriceShort(effectivePrice(x));
+      return '<button type="button" class="presentation-option' + (selected ? ' is-selected' : '') + (x.availability === 'agotado' ? ' is-soldout' : '') + '" data-size="' + escapeHtml(x.size) + '" aria-pressed="' + selected + '">' +
+        '<span class="presentation-size">' + escapeHtml(presentationLabel(x)) + '</span>' +
+        '<span class="presentation-price">' + (x.availability === 'agotado' ? 'Agotado' : price) + '</span></button>';
+    }).join('') + '</div>';
+}
+
+function formatPriceShort(value) {
+  return Number(value) > 0 ? '₡' + Number(value).toLocaleString('de-DE', { maximumFractionDigits: 0 }) : 'Por confirmar';
 }
 
 function renderProductNotes(p) {

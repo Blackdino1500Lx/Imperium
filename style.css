@@ -166,6 +166,23 @@ select { padding-right: 7px; }
 .placeholder-brand { position: absolute; bottom: 23px; inset-inline: 13px; text-align: center; color: #d0b575; font-size: 12px; letter-spacing: .11em; }
 .availability-badge { position: absolute; top: 13px; left: 13px; padding: 6px 12px; background: #efe5c8; color: var(--navy); font-size: 12px; font-weight: 500; z-index: 2; border-radius: var(--radius-pill); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
 .availability-badge.sold-out { background: #f0f1f3; color: #333943; }
+
+/* Promociones y presentaciones */
+.price-old { color: var(--muted); font-size: .85em; font-weight: 400; text-decoration: line-through; margin-right: 4px; }
+.price-now { color: #8b2525; font-weight: 600; }
+.price-from { font-size: 12px; color: var(--muted); font-weight: 400; margin-right: 2px; }
+.discount-badge { display: inline-block; padding: 3px 9px; background: #8b2525; color: #fff; font-size: 12px; font-weight: 600; letter-spacing: .02em; border-radius: var(--radius-pill); vertical-align: middle; }
+.discount-badge.on-picture { position: absolute; top: 13px; right: 13px; z-index: 2; padding: 6px 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+.product-sizes { display: block; margin-top: 6px; font-size: 12px; color: var(--muted); }
+.presentation-picker { margin: -4px 0 20px; }
+.presentation-label { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.presentation-options { display: flex; flex-wrap: wrap; gap: 10px; }
+.presentation-option { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 110px; min-height: 56px; padding: 9px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--white); color: var(--black); text-align: left; transition: all .2s; cursor: pointer; }
+.presentation-option:hover { border-color: var(--gold); }
+.presentation-option.is-selected { border-color: var(--gold-ink); background: #f8f4e9; box-shadow: 0 2px 8px rgba(176, 141, 60, 0.15); }
+.presentation-option.is-soldout .presentation-size { text-decoration: line-through; color: var(--muted); }
+.presentation-size { font-weight: 500; font-size: 15px; }
+.presentation-price { font-size: 13px; color: var(--muted); }
 .product-body { display: block; padding: 17px 1px 0; }
 .product-brand { display: block; color: var(--gold-ink); font-size: 12px; margin-bottom: 5px; letter-spacing: .04em; text-transform: uppercase; }
 .product-name { display: block; color: var(--black); font: 500 24px/1.13 var(--serif); min-height: 54px; transition: color .2s; }
@@ -388,7 +405,7 @@ select { padding-right: 7px; }
   .wrap { width: calc(100% - 30px); } .hero h1 { font-size: 45px; } 
   .logo-stage { width: 70%; } .logo-arch { min-height: 240px; } .hero-logo { max-height: 185px; } 
   .product-brand { font-size: 11px; } .product-name { font-size: 21px; min-height: 50px; } .product-price { font-size: 15px; } 
-  .placeholder-brand { font-size: 10px; bottom: 17px; letter-spacing: .04em; } .availability-badge { top: 9px; left: 8px; font-size: 11px; padding: 4px 7px; } 
+  .placeholder-brand { font-size: 10px; bottom: 17px; letter-spacing: .04em; } .availability-badge { top: 9px; left: 8px; font-size: 11px; padding: 4px 7px; } .discount-badge.on-picture { top: 9px; right: 8px; font-size: 11px; padding: 4px 7px; } 
   .contact-grid { grid-template-columns: 1fr; gap: 27px; } .contact-grid h2 { margin-bottom: 5px; } 
   .modal-copy { padding: 26px 20px; } .fact-row { grid-template-columns: 104px 1fr; gap: 9px; }
   .header-actions { gap: 6px; } .header-inner { gap: 8px; } 

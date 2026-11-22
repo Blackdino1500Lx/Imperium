@@ -79,6 +79,110 @@ async function loadProducts() {
   renderPagination();
 }
 
+// ---------- Precios, promociones y presentaciones ----------
+function formatCRC(n) {
+  return `₡${Number(n).toLocaleString('de-DE')}`;
+}
+
+function hasSale(price, sale) {
+  return sale != null && sale !== '' && Number(sale) > 0 && Number(sale) < Number(price);
+}
+
+function discountPercent(price, sale) {
+  return Math.round((1 - Number(sale) / Number(price)) * 100);
+}
+
+// Precio para la tabla: tachado + promo + badge, y cuántas presentaciones tiene
+function priceHTML(p) {
+  let html = hasSale(p.price, p.sale_price)
+    ? `<span class="price-old">${formatCRC(p.price)}</span> <span class="price-now">${formatCRC(p.sale_price)}</span> <span class="discount-badge">-${discountPercent(p.price, p.sale_price)}%</span>`
+    : formatCRC(p.price);
+  const count = Array.isArray(p.presentations) ? p.presentations.length : 0;
+  if (count > 1) html += `<div class="price-extra">${count} presentaciones</div>`;
+  return html;
+}
+
+// Si el producto aún no tiene presentaciones guardadas, usa sus campos de siempre
+function normalizePresentations(p) {
+  if (Array.isArray(p.presentations) && p.presentations.length) return p.presentations;
+  return [{ size: p.size, price: p.price, sale_price: p.sale_price, availability: p.availability }];
+}
+
+function presentationsText(p) {
+  return normalizePresentations(p).map(x => {
+    const price = hasSale(x.price, x.sale_price)
+      ? `${formatCRC(x.price)} → ${formatCRC(x.sale_price)} (-${discountPercent(x.price, x.sale_price)}%)`
+      : formatCRC(x.price);
+    return `${x.size ? x.size + ' ml' : 'Única'}: ${price} · ${AVAILABILITY[x.availability] || AVAILABILITY.confirmar}`;
+  }).join('\n');
+}
+
+function escAttr(v) {
+  return String(v ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function presentationRowHTML(p = {}) {
+  const current = AVAILABILITY[p.availability] ? p.availability : 'confirmar';
+  const options = Object.entries(AVAILABILITY)
+    .map(([value, label]) => `<option value="${value}"${value === current ? ' selected' : ''}>${label}</option>`)
+    .join('');
+  return `
+    <div class="presentation-row">
+      <label>Tamaño (ml)
+        <input type="text" data-p="size" value="${escAttr(p.size)}" placeholder="100">
+      </label>
+      <label>Precio (₡)
+        <input type="number" data-p="price" min="0" step="any" value="${escAttr(p.price)}" required>
+      </label>
+      <label>Promoción (₡)
+        <input type="number" data-p="sale_price" min="0" step="any" value="${escAttr(p.sale_price)}" placeholder="Sin promo">
+      </label>
+      <label>Disponibilidad
+        <select data-p="availability">${options}</select>
+      </label>
+      <button type="button" class="button danger small" data-remove-presentation title="Quitar">✕</button>
+    </div>`;
+}
+
+function addPresentationRow(p = {}) {
+  document.getElementById('presentations-list').insertAdjacentHTML('beforeend', presentationRowHTML(p));
+}
+
+function renderPresentations(list) {
+  document.getElementById('presentations-list').innerHTML = '';
+  (list.length ? list : [{}]).forEach(item => addPresentationRow(item));
+}
+
+// Lee y valida las filas del formulario. Devuelve la lista o null si hay un error (ya avisó con alert)
+function collectPresentations() {
+  const rows = [...document.querySelectorAll('#presentations-list .presentation-row')];
+  const list = [];
+  const seen = new Set();
+
+  for (const [i, row] of rows.entries()) {
+    const val = (name) => row.querySelector(`[data-p="${name}"]`).value.trim();
+    const size = val('size');
+    const label = size ? `${size} ml` : `#${i + 1}`;
+    const price = Number(val('price'));
+    const saleRaw = val('sale_price');
+    const sale = saleRaw === '' ? null : Number(saleRaw);
+
+    if (val('price') === '' || Number.isNaN(price) || price < 0) {
+      alert(`Revisa el precio de la presentación ${label}.`); return null;
+    }
+    if (sale !== null && (Number.isNaN(sale) || sale <= 0 || sale >= price)) {
+      alert(`La promoción de ${label} debe ser mayor que 0 y menor que su precio normal.`); return null;
+    }
+    if (rows.length > 1) {
+      if (!size) { alert('Cuando hay varias presentaciones, cada una necesita su tamaño en ml (ej. 100).'); return null; }
+      if (seen.has(size.toLowerCase())) { alert(`La presentación de ${size} ml está repetida.`); return null; }
+      seen.add(size.toLowerCase());
+    }
+    list.push({ size, price, sale_price: sale, availability: val('availability') });
+  }
+  return list;
+}
+
 function availabilityBadge(value) {
   const key = AVAILABILITY[value] ? value : 'confirmar';
   return `<span class="status-badge avail-${key}">${AVAILABILITY[key]}</span>`;
@@ -95,7 +199,7 @@ function renderTable(data) {
       <td><img src="${p.image_url || '../assets/img/logo.svg'}" alt=""></td>
       <td>${p.brand}</td>
       <td>${p.name}</td>
-      <td>₡${Number(p.price).toLocaleString('de-DE')}</td>
+      <td>${priceHTML(p)}</td>
       <td>${availabilityBadge(p.availability)}</td>
       <td><span class="status-badge ${p.active ? 'active' : 'inactive'}">${p.active ? 'Activo' : 'Inactivo'}</span></td>
       <td>
@@ -145,10 +249,8 @@ function showDetails(id) {
 
   set('brand', p.brand);
   set('name', p.name);
-  set('price', `₡${Number(p.price).toLocaleString('de-DE')}`);
-  set('size', p.size);
+  set('presentations', presentationsText(p));
   set('category', p.category);
-  set('availability', AVAILABILITY[p.availability] || AVAILABILITY.confirmar);
   set('status', p.active ? 'Activo' : 'Inactivo');
   set('top', p.top);
   set('heart', p.heart);
@@ -178,10 +280,8 @@ async function setupDialog(id = null) {
 
       form.elements.id.value = data.id;
       form.elements.name.value = data.name;
-      form.elements.price.value = data.price;
-      form.elements.size.value = data.size || '';
       form.elements.category.value = data.category || '';
-      form.elements.availability.value = data.availability || 'confirmar';
+      renderPresentations(normalizePresentations(data));
       form.elements.top.value = data.top || '';
       form.elements.heart.value = data.heart || '';
       form.elements.base.value = data.base || '';
@@ -195,6 +295,7 @@ async function setupDialog(id = null) {
   } else {
     document.getElementById('dlg-prod-title').textContent = 'Nuevo Producto';
     await loadBrands();
+    renderPresentations([]);
     // El id se genera UNA sola vez al abrir el diálogo, así que aunque el
     // guardado se ejecute varias veces, todas usan el mismo id (no duplica)
     form.elements.id.value = `imp-${crypto.randomUUID()}`;
@@ -226,6 +327,16 @@ export function initProductos() {
   });
 
   document.getElementById('btn-new-product').addEventListener('click', () => setupDialog());
+
+  // Presentaciones del formulario: agregar / quitar fila
+  document.getElementById('btn-add-presentation').addEventListener('click', () => addPresentationRow());
+  document.getElementById('presentations-list').addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('[data-remove-presentation]');
+    if (!removeBtn) return;
+    const rows = document.querySelectorAll('#presentations-list .presentation-row');
+    if (rows.length <= 1) return; // debe quedar al menos una
+    removeBtn.closest('.presentation-row').remove();
+  });
 
   // Delegación en la tabla
   document.querySelector('#prod-table tbody').addEventListener('click', async (e) => {
@@ -266,6 +377,9 @@ export function initProductos() {
       return;
     }
 
+    const presentations = collectPresentations();
+    if (!presentations) return; // ya se mostró el error
+
     saving = true;
     btn.disabled = true; btn.textContent = 'Guardando...';
 
@@ -280,13 +394,19 @@ export function initProductos() {
         imageUrl = await uploadImage(base64, id);
       }
 
+      // La primera presentación es la principal: se refleja en price/size/availability/sale_price
+      // para que el catálogo y los filtros actuales sigan funcionando
+      const main = presentations[0];
+
       const payload = {
         brand: brandValue,
         name: form.elements.name.value,
-        price: Number(form.elements.price.value),
-        size: form.elements.size.value,
+        price: main.price,
+        size: main.size,
         category: form.elements.category.value,
-        availability: form.elements.availability.value,
+        availability: main.availability,
+        sale_price: main.sale_price,
+        presentations,
         top: form.elements.top.value,
         heart: form.elements.heart.value,
         base: form.elements.base.value,

@@ -1,13 +1,20 @@
 // Capa de acceso a datos: todas las consultas a Supabase.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { normalizePresentations, aggregateAvailability, effectivePrice } from './utils.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Mapea los campos de la base de datos a los nombres que usa el frontend.
 function mapProduct(p) {
+  // Presentaciones normalizadas; la disponibilidad del producto resume la de todas ellas
+  const presentations = normalizePresentations(p);
+  const prices = presentations.map(effectivePrice).filter(n => n > 0);
   return {
     ...p,
+    presentations,
+    availability: aggregateAvailability(presentations),
+    minPrice: prices.length ? Math.min(...prices) : 0,
     photo: p.image_url,
     photoSource: p.photo_source,
     notesSummary: p.notes_summary,
@@ -20,7 +27,7 @@ function mapProduct(p) {
 export async function getProducts() {
   const { data, error } = await supabase.schema('imperium')
     .from('products')
-    .select('id, brand, name, price, size, category, availability, image_url, photo_source, notes_summary, product_collections(collection_id)')
+    .select('id, brand, name, price, sale_price, presentations, size, category, availability, image_url, photo_source, notes_summary, product_collections(collection_id)')
     .eq('active', true);
     
   if (error) {

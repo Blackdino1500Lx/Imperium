@@ -1,6 +1,6 @@
 // Catálogo: filtros, paginación y tarjetas de producto.
 import { filters, selectProducts, priceBounds, collator } from './filtros.js';
-import { escapeHtml, formatPrice, fullName, visualHtml, optionsHtml, normalize } from './utils.js';
+import { escapeHtml, formatPrice, fullName, visualHtml, optionsHtml, normalize, cardPriceHtml, cardPriceText, presentationLabel } from './utils.js';
 
 let products = [];
 let collectionsList = [];
@@ -78,12 +78,24 @@ function applyHashFilter() {
 }
 
 function cardHtml(p) {
+  const multi = p.presentations.length > 1;
+  const soldOut = p.availability === 'agotado';
+  const label = fullName(p);
+  const sizes = multi ? '<span class="product-sizes">' + p.presentations.map(presentationLabel).join(' · ') + '</span>' : '';
+
+  // Con varias presentaciones hay que elegir una: el botón abre la ficha del producto
+  const action = soldOut
+    ? '<button type="button" class="button card-cart-add" disabled>Agotado</button>'
+    : multi
+      ? '<button type="button" class="button card-cart-add" data-choose-id="' + p.id + '" aria-haspopup="dialog" aria-controls="product-dialog" aria-label="' + escapeHtml('Elegir presentación de ' + label) + '">Elegir presentación</button>'
+      : '<button type="button" class="button card-cart-add" data-cart-add="' + p.id + '" aria-label="' + escapeHtml('Añadir ' + label + ' al carrito') + '">Añadir al carrito</button>';
+
   return '<article class="product-card" data-card-id="' + p.id + '">' +
-    '<button type="button" class="product-open" data-open-id="' + p.id + '" aria-haspopup="dialog" aria-controls="product-dialog" aria-label="' + escapeHtml('Ver ' + fullName(p) + ', ' + formatPrice(p.price)) + '">' +
+    '<button type="button" class="product-open" data-open-id="' + p.id + '" aria-haspopup="dialog" aria-controls="product-dialog" aria-label="' + escapeHtml('Ver ' + label + ', ' + cardPriceText(p)) + '">' +
       '<span class="product-picture" data-visual-id="' + p.id + '">' + visualHtml(p) + '</span>' +
-      '<span class="product-body"><span class="product-brand">' + escapeHtml(p.brand) + '</span><span class="product-name">' + escapeHtml(p.name) + '</span><span class="product-price">' + formatPrice(p.price) + '</span></span>' +
+      '<span class="product-body"><span class="product-brand">' + escapeHtml(p.brand) + '</span><span class="product-name">' + escapeHtml(p.name) + '</span><span class="product-price">' + cardPriceHtml(p) + '</span>' + sizes + '</span>' +
     '</button>' +
-    '<button type="button" class="button card-cart-add" data-cart-add="' + p.id + '" aria-label="' + escapeHtml('Añadir ' + fullName(p) + ' al carrito') + '"' + (p.availability === 'agotado' ? ' disabled' : '') + '>' + (p.availability === 'agotado' ? 'Agotado' : 'Añadir al carrito') + '</button>' +
+    action +
   '</article>';
 }
 

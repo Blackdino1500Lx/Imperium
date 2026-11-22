@@ -18,6 +18,98 @@ export function formatPrice(price) {
   return Number(price) > 0 ? '₡' + Number(price).toLocaleString('de-DE', { maximumFractionDigits: 0 }) : 'Precio por confirmar';
 }
 
+// ---------- Presentaciones y promociones ----------
+
+// ¿Hay una promoción válida? (mayor que 0 y menor que el precio normal)
+export function hasSale(price, sale) {
+  return Number(sale) > 0 && Number(price) > 0 && Number(sale) < Number(price);
+}
+
+export function discountPercent(price, sale) {
+  return Math.round((1 - Number(sale) / Number(price)) * 100);
+}
+
+// Lista normalizada de presentaciones. Si el producto no tiene, usa sus campos de siempre.
+export function normalizePresentations(p) {
+  const raw = Array.isArray(p.presentations) && p.presentations.length
+    ? p.presentations
+    : [{ size: p.size, price: p.price, sale_price: p.sale_price, availability: p.availability }];
+  return raw.map(x => ({
+    size: x.size == null ? '' : String(x.size).trim(),
+    price: Number(x.price) || 0,
+    sale_price: hasSale(x.price, x.sale_price) ? Number(x.sale_price) : null,
+    availability: AVAILABILITY[x.availability] ? x.availability : 'confirmar'
+  }));
+}
+
+export function getPresentations(p) {
+  return Array.isArray(p.presentations) && p.presentations.length ? p.presentations : normalizePresentations(p);
+}
+
+// Precio que paga el cliente: la promoción si existe, si no el precio normal.
+export function effectivePrice(pres) {
+  return pres.sale_price != null ? pres.sale_price : pres.price;
+}
+
+export function findPresentation(p, size) {
+  const list = getPresentations(p);
+  return list.find(x => x.size === size) || list[0];
+}
+
+export function cheapestPresentation(p) {
+  const list = getPresentations(p);
+  const priced = list.filter(x => effectivePrice(x) > 0);
+  return (priced.length ? priced : list).reduce((best, x) => effectivePrice(x) < effectivePrice(best) ? x : best);
+}
+
+// Disponibilidad del producto según sus presentaciones: basta con que una se pueda pedir.
+export function aggregateAvailability(list) {
+  for (const state of ['disponible', 'pocas', 'confirmar']) {
+    if (list.some(x => x.availability === state)) return state;
+  }
+  return 'agotado';
+}
+
+export function presentationLabel(pres) {
+  return pres.size ? pres.size + ' ml' : 'Única';
+}
+
+// Precio de una presentación: normal, o precio anterior tachado + promoción.
+export function priceHtml(pres) {
+  return hasSale(pres.price, pres.sale_price)
+    ? '<s class="price-old">' + formatPrice(pres.price) + '</s> <span class="price-now">' + formatPrice(pres.sale_price) + '</span>'
+    : formatPrice(pres.price);
+}
+
+export function discountBadgeHtml(pres) {
+  return hasSale(pres.price, pres.sale_price)
+    ? '<span class="discount-badge">-' + discountPercent(pres.price, pres.sale_price) + '%</span>'
+    : '';
+}
+
+// Mayor descuento entre las presentaciones del producto (0 si no hay promoción).
+export function maxDiscount(p) {
+  return getPresentations(p).reduce((max, x) => hasSale(x.price, x.sale_price) ? Math.max(max, discountPercent(x.price, x.sale_price)) : max, 0);
+}
+
+// Badge de descuento sobre la foto de la tarjeta.
+export function promoBadgeHtml(p) {
+  const percent = maxDiscount(p);
+  return percent > 0 ? '<span class="discount-badge on-picture">-' + percent + '%</span>' : '';
+}
+
+// Precio de la tarjeta: con varias presentaciones muestra "Desde" la más barata.
+export function cardPriceHtml(p) {
+  const prefix = getPresentations(p).length > 1 ? '<span class="price-from">Desde</span> ' : '';
+  return prefix + priceHtml(cheapestPresentation(p));
+}
+
+// Lo mismo en texto plano (para aria-label).
+export function cardPriceText(p) {
+  const best = cheapestPresentation(p);
+  return (getPresentations(p).length > 1 ? 'desde ' : '') + formatPrice(effectivePrice(best));
+}
+
 // Redondea hacia arriba al siguiente múltiplo de 500 (para el panel admin).
 export function roundPrice(price) {
   return Number(price) > 0 ? Math.ceil(Number(price) / 500) * 500 : 0;
@@ -29,11 +121,12 @@ export function fullName(p) {
 }
 
 // Enlace de WhatsApp, opcionalmente con el mensaje de un producto.
-export function whatsappUrl(phone, product) {
+export function whatsappUrl(phone, product, presentation) {
   const digits = String(phone).replace(/\D/g, '');
   let message = 'Hola, Imperium. Quisiera información sobre sus perfumes.';
   if (product) {
-    message = 'Hola, Imperium. ' + (product.availability === 'agotado' ? 'Quisiera consultar si volverá a estar disponible ' : 'Quisiera pedir ') + fullName(product) + '. Precio: ' + formatPrice(product.price) + '.' + (product.size ? ' Presentación: ' + product.size + ' ml.' : '') + ' ¿Me pueden confirmar disponibilidad y entrega?';
+    const pres = presentation || findPresentation(product);
+    message = 'Hola, Imperium. ' + (pres.availability === 'agotado' ? 'Quisiera consultar si volverá a estar disponible ' : 'Quisiera pedir ') + fullName(product) + '. Precio: ' + formatPrice(effectivePrice(pres)) + (hasSale(pres.price, pres.sale_price) ? ' (en promoción)' : '') + '.' + (pres.size ? ' Presentación: ' + pres.size + ' ml.' : '') + ' ¿Me pueden confirmar disponibilidad y entrega?';
   }
   return 'https://wa.me/' + digits + '?text=' + encodeURIComponent(message);
 }
@@ -58,7 +151,7 @@ export function badgeHtml(p) {
 export function visualHtml(p, large = false) {
   return (p.photo
     ? '<img class="product-image" data-product-image="' + p.id + '" src="' + escapeHtml(p.photo) + '" alt="' + escapeHtml(fullName(p)) + '" loading="' + (large ? 'eager' : 'lazy') + '" decoding="async" width="700" height="805">'
-    : bottleSvg(p, large)) + badgeHtml(p);
+    : bottleSvg(p, large)) + badgeHtml(p) + (large ? '' : promoBadgeHtml(p));
 }
 
 // Opciones de un <select> a partir de pares [valor, etiqueta].

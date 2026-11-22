@@ -168,26 +168,12 @@
         <label>Nombre
           <input type="text" name="name" required>
         </label>
-        <label>Precio (₡)
-          <input type="number" name="price" min="0" required>
-        </label>
-        <label>Tamaño (ml)
-          <input type="text" name="size">
-        </label>
         <label>Categoría
           <select name="category">
             <option value="">Sin especificar</option>
             <option value="Hombre">Hombre</option>
             <option value="Mujer">Mujer</option>
             <option value="Unisex">Unisex</option>
-          </select>
-        </label>
-        <label>Disponibilidad
-          <select name="availability">
-            <option value="confirmar">Por confirmar</option>
-            <option value="disponible">Disponible</option>
-            <option value="pocas">Pocas unidades</option>
-            <option value="agotado">Agotado</option>
           </select>
         </label>
         <label>Notas de salida
@@ -203,6 +189,13 @@
           <textarea name="usage_override" rows="3" placeholder="Déjalo vacío para calcularlo a partir de las notas. Si escribes algo aquí, este texto se muestra tal cual."></textarea>
         </label>
       </div>
+
+      <fieldset class="presentations-box">
+        <legend>Presentaciones y precios</legend>
+        <p class="hint">La primera es la principal y la que se muestra en el catálogo. Agrega más si el perfume viene en otros tamaños. Llena "Promoción" solo si hay descuento (debe ser menor al precio).</p>
+        <div id="presentations-list"></div>
+        <button type="button" class="button outline small" id="btn-add-presentation">+ Agregar presentación</button>
+      </fieldset>
 
       <div class="image-upload">
         <label>Foto
@@ -226,10 +219,8 @@
       <dl class="details-list">
         <div><dt>Marca</dt><dd data-field="brand"></dd></div>
         <div><dt>Nombre</dt><dd data-field="name"></dd></div>
-        <div><dt>Precio</dt><dd data-field="price"></dd></div>
-        <div><dt>Tamaño</dt><dd data-field="size"></dd></div>
+        <div><dt>Presentaciones</dt><dd data-field="presentations"></dd></div>
         <div><dt>Categoría</dt><dd data-field="category"></dd></div>
-        <div><dt>Disponibilidad</dt><dd data-field="availability"></dd></div>
         <div><dt>Estado</dt><dd data-field="status"></dd></div>
         <div><dt>Notas de salida</dt><dd data-field="top"></dd></div>
         <div><dt>Notas de corazón</dt><dd data-field="heart"></dd></div>
