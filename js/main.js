@@ -69,14 +69,26 @@ function applyCollectionFromUrl() {
   const select = document.getElementById('collection-filter');
   if (!select) return;
 
-  const hasOption = [...select.options].some(o => o.value === slug);
-  if (!hasOption) {
-    console.warn('[collection] Slug no encontrado en el select:', slug,
-      'Opciones disponibles:', [...select.options].map(o => o.value));
-    return;
-  }
+  const slugify = s => String(s || '')
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase().trim()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '');
 
-  select.value = slug;
+const wanted = slugify(slug);
+const option = [...select.options].find(o => o.value && (
+  o.value === slug ||
+  slugify(o.value) === wanted ||
+  slugify(o.textContent) === wanted
+));
+
+if (!option) {
+  console.warn('[collection] Colección no encontrada:', slug,
+    'Opciones:', [...select.options].map(o => [o.value, o.textContent]));
+  return;
+}
+
+select.value = option.value;
   select.dispatchEvent(new Event('change', { bubbles: true }));
 
   // Desplazar al catálogo para que el usuario vea el resultado
