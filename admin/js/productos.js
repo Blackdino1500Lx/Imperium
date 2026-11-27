@@ -80,15 +80,15 @@ async function loadProducts() {
 }
 
 // ---------- Precios, promociones y presentaciones ----------
-function formatCRC(n) {
+export function formatCRC(n) {
   return `₡${Number(n).toLocaleString('de-DE')}`;
 }
 
-function hasSale(price, sale) {
+export function hasSale(price, sale) {
   return sale != null && sale !== '' && Number(sale) > 0 && Number(sale) < Number(price);
 }
 
-function discountPercent(price, sale) {
+export function discountPercent(price, sale) {
   return Math.round((1 - Number(sale) / Number(price)) * 100);
 }
 
@@ -169,6 +169,9 @@ function collectPresentations() {
 
     if (val('price') === '' || Number.isNaN(price) || price < 0) {
       alert(`Revisa el precio de la presentación ${label}.`); return null;
+    }
+    if (price <= 0) {
+      alert(`El precio de la presentación ${label} debe ser mayor que 0.`); return null;
     }
     if (sale !== null && (Number.isNaN(sale) || sale <= 0 || sale >= price)) {
       alert(`La promoción de ${label} debe ser mayor que 0 y menor que su precio normal.`); return null;
