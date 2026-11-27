@@ -153,3 +153,16 @@ init();
 window.addEventListener('hashchange', () => {
   applyCollectionFromUrl();
 });
+// Si el enlace del banner es solo un nombre (sin http, /, # ni ?), se trata como colección
+document.addEventListener('click', event => {
+  const link = event.target.closest('#banner-track a');
+  if (!link) return;
+
+  const raw = (link.getAttribute('href') || '').trim();
+  if (!raw || /^(https?:|mailto:|tel:|\/|#|\?)/i.test(raw)) return;
+
+  event.preventDefault();
+  const target = '#catalogo?collection=' + encodeURIComponent(raw);
+  if (location.hash === target) applyCollectionFromUrl();
+  else location.hash = target;
+});
