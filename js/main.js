@@ -46,18 +46,59 @@ function initMenu() {
   });
 }
 
+// Lee ?collection= tanto de ?search como de #hash (soporta los dos formatos)
+function getCollectionFromUrl() {
+  // 1. Probar primero el query string normal: ?collection=x
+  const fromSearch = new URLSearchParams(location.search).get('collection');
+  if (fromSearch) return fromSearch;
+
+  // 2. Probar desde el hash: #catalogo?collection=x  ·  #?collection=x
+  const hash = location.hash || '';
+  const qIndex = hash.indexOf('?');
+  if (qIndex === -1) return null;
+
+  const hashQuery = hash.slice(qIndex + 1);
+  return new URLSearchParams(hashQuery).get('collection');
+}
+
+// Aplica la colección de la URL al filtro y refresca el catálogo
+function applyCollectionFromUrl() {
+  const slug = getCollectionFromUrl();
+  if (!slug) return;
+
+  const select = document.getElementById('collection-filter');
+  if (!select) return;
+
+  const hasOption = [...select.options].some(o => o.value === slug);
+  if (!hasOption) {
+    console.warn('[collection] Slug no encontrado en el select:', slug,
+      'Opciones disponibles:', [...select.options].map(o => o.value));
+    return;
+  }
+
+  select.value = slug;
+  select.dispatchEvent(new Event('change', { bubbles: true }));
+
+  // Desplazar al catálogo para que el usuario vea el resultado
+  const target = document.getElementById('catalogo');
+  if (target) {
+    // Un pequeño delay para que el catálogo termine de re-renderizar
+    setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  }
+}
+
 async function init() {
   const grid = document.getElementById('catalog-grid');
   const errorState = document.getElementById('api-error');
-  
+
   try {
     const [products, config, banners, collections] = await Promise.all([
-      getProducts(), 
+      getProducts(),
       getSettings(),
       getBanners(),
       getCollections()
     ]);
-    
+
     const heroSection = document.getElementById('inicio');
     if (banners && banners.length > 0) {
       heroSection.hidden = true;
@@ -65,9 +106,9 @@ async function init() {
       heroSection.hidden = false;
     }
 
-    // CAMBIO: Forzamos 10 por defecto si no hay valor en la DB (|| 10)
     initCatalog(products, Number(config.pageSize) || 10, collections);
-    
+    applyCollectionFromUrl();   // ← aplica la colección de la URL
+
     initProductModal(config);
     initCart(products, config);
     initQuiz(config);
@@ -88,9 +129,15 @@ async function init() {
     console.error(error);
     grid.hidden = true;
     errorState.hidden = false;
-    
+
     document.getElementById('retry-button').addEventListener('click', () => location.reload());
   }
 }
 
 init();
+
+// Si el usuario navega a un hash que cambia la colección DESPUÉS de cargar
+// (por ejemplo, clic en otro banner desde la misma página), refrescamos el filtro
+window.addEventListener('hashchange', () => {
+  applyCollectionFromUrl();
+});
