@@ -39,11 +39,42 @@ async function loadBanners() {
   `).join('');
 }
 
+const COLLECTION_LINK_PREFIX = '#catalogo?collection=';
+
+// Crea (una sola vez) el desplegable de colecciones junto al campo del enlace
+// y lo llena con las colecciones activas. Al elegir una, rellena cta_link con su id.
+async function setupCollectionPicker(form) {
+  const linkInput = form.elements.cta_link;
+  let select = form.elements.cta_collection;
+
+  if (!select) {
+    const label = document.createElement('label');
+    label.append('Colección destino (opcional)');
+    select = document.createElement('select');
+    select.name = 'cta_collection';
+    label.append(select);
+    const anchor = linkInput.closest('label') || linkInput;
+    anchor.parentNode.insertBefore(label, anchor);
+
+    select.addEventListener('change', () => {
+      if (select.value) linkInput.value = COLLECTION_LINK_PREFIX + select.value;
+      else if (linkInput.value.startsWith(COLLECTION_LINK_PREFIX)) linkInput.value = '';
+    });
+  }
+
+  select.replaceChildren(new Option('Sin colección', ''));
+  const { data } = await supabase.schema('imperium').from('collections')
+    .select('id, name').eq('active', true).order('name');
+  (data || []).forEach(c => select.append(new Option(c.name, c.id)));
+  return select;
+}
+
 async function setupDialog(id = null) {
   const dialog = document.getElementById('dialog-banner');
   const form = document.getElementById('form-banner');
   form.reset();
   form.elements.id.value = '';
+  const collectionSelect = await setupCollectionPicker(form);
   document.getElementById('banner-image-preview').style.backgroundImage = 'none';
   document.getElementById('banner-image-preview').textContent = 'Sin imagen';
   document.getElementById('banner-mobile-preview').style.backgroundImage = 'none';
@@ -57,6 +88,9 @@ async function setupDialog(id = null) {
       form.elements.subtitle.value = data.subtitle || '';
       form.elements.cta_text.value = data.cta_text || '';
       form.elements.cta_link.value = data.cta_link || '';
+      if ((data.cta_link || '').startsWith(COLLECTION_LINK_PREFIX)) {
+        collectionSelect.value = decodeURIComponent(data.cta_link.slice(COLLECTION_LINK_PREFIX.length));
+      }
       form.elements.active.checked = data.active;
       if (data.image_url) {
         const prev = document.getElementById('banner-image-preview');

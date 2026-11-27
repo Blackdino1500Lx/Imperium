@@ -69,26 +69,27 @@ function applyCollectionFromUrl() {
   const select = document.getElementById('collection-filter');
   if (!select) return;
 
-  const slugify = s => String(s || '')
-  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  .toLowerCase().trim()
-  .replace(/[^a-z0-9]+/g, '-')
-  .replace(/^-+|-+$/g, '');
+  // Acepta el id (UUID), el slug o el nombre visible de la colección
+  const slugify = t => String(t || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
-const wanted = slugify(slug);
-const option = [...select.options].find(o => o.value && (
-  o.value === slug ||
-  slugify(o.value) === wanted ||
-  slugify(o.textContent) === wanted
-));
+  const wanted = slugify(slug);
+  const option = [...select.options].find(o => o.value && (
+    o.value === slug ||
+    slugify(o.value) === wanted ||
+    slugify(o.textContent) === wanted
+  ));
 
-if (!option) {
-  console.warn('[collection] Colección no encontrada:', slug,
-    'Opciones:', [...select.options].map(o => [o.value, o.textContent]));
-  return;
-}
+  if (!option) {
+    console.warn('[collection] Colección no encontrada:', slug,
+      'Opciones:', [...select.options].map(o => [o.value, o.textContent]));
+    return;
+  }
 
-select.value = option.value;
+  select.value = option.value;
   select.dispatchEvent(new Event('change', { bubbles: true }));
 
   // Desplazar al catálogo para que el usuario vea el resultado
@@ -153,13 +154,25 @@ init();
 window.addEventListener('hashchange', () => {
   applyCollectionFromUrl();
 });
-// Si el enlace del banner es solo un nombre (sin http, /, # ni ?), se trata como colección
+// Clic en el botón de un banner:
+// - Si el enlace es solo un nombre de colección (sin http, /, # ni ?), lo trata como colección.
+// - Si ya es #catalogo?collection=..., y ya estamos en ese mismo hash, vuelve a aplicar el filtro
+//   (el navegador no dispara hashchange cuando el hash no cambia).
 document.addEventListener('click', event => {
   const link = event.target.closest('#banner-track a');
   if (!link) return;
 
   const raw = (link.getAttribute('href') || '').trim();
-  if (!raw || /^(https?:|mailto:|tel:|\/|#|\?)/i.test(raw)) return;
+  if (!raw) return;
+
+  if (raw.startsWith('#')) {
+    if (raw.includes('collection=') && location.hash === raw) {
+      event.preventDefault();
+      applyCollectionFromUrl();
+    }
+    return;
+  }
+  if (/^(https?:|mailto:|tel:|\/|\?)/i.test(raw)) return;
 
   event.preventDefault();
   const target = '#catalogo?collection=' + encodeURIComponent(raw);
